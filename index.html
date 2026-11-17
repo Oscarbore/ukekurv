@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2F9F3">
+<meta name="description" content="Ukemeny og handleliste for hele uken.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ukekurv">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Ukekurv</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: one calm phone-width column; the finished week opens into two columns on wide screens. */
+  --bg:#F2F9F3;
+  --surface:#FFFFFF;
+  --ink:#1F3A2D;
+  --muted:#5C7868;
+  --leaf:#8FD3A8;
+  --leaf-soft:#DFF3E5;
+  --leaf-deep:#26784C;
+  --line:#D9EADF;
+  --note:#FBF3E2;
+  --note-ink:#6B5521;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:18px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--leaf-deep);outline-offset:2px;border-radius:10px}
+
+.app{max-width:480px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) calc(120px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));min-height:100%;display:flex;flex-direction:column;gap:22px}
+.app.wide{max-width:1000px}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:-.01em}
+.brand svg{width:32px;height:32px;flex:none}
+.stepno{font-size:13px;color:var(--muted);font-weight:500}
+.bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.bar i{height:6px;border-radius:6px;background:var(--line);transition:background .3s}
+.bar i.on{background:var(--leaf-deep)}
+
+h1{font-family:var(--display);font-weight:500;font-size:32px;line-height:1.12;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:21px;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h3{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0}
+p{margin:0}
+.lead{color:var(--muted);font-size:17px}
+.head{display:flex;flex-direction:column;gap:10px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.group{display:flex;flex-direction:column;gap:10px}
+
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:26px 22px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-70px;top:-70px;width:200px;height:200px;border-radius:50%;background:var(--leaf-soft)}
+.hero>*{position:relative;z-index:1}
+.hero h1{font-size:36px;max-width:9em}
+
+label.f{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:14px}
+input[type=text]{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;font-size:17px;width:100%}
+input[type=text]:focus{outline:none;border-color:var(--leaf-deep);box-shadow:0 0 0 4px var(--leaf-soft)}
+.stepper{display:flex;align-items:center;gap:6px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:6px;width:max-content}
+.stepper button{width:42px;height:42px;border-radius:10px;border:0;background:var(--leaf-soft);font-size:22px;font-weight:600;line-height:1}
+.stepper button:disabled{opacity:.4;cursor:default}
+.stepper output{min-width:92px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
+
+.chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.chips.one{grid-template-columns:1fr}
+.chip{display:flex;align-items:center;gap:10px;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:13px 14px;min-height:54px;transition:background .15s,border-color .15s,transform .1s}
+.chip:active{transform:scale(.98)}
+.chip .tick{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;transition:background .15s,border-color .15s}
+.chip .tick svg{width:12px;height:12px;opacity:0}
+.chip .t{display:flex;flex-direction:column;min-width:0;overflow-wrap:anywhere}
+.chip b{font-weight:600}
+.chip small{color:var(--muted);font-size:13px;line-height:1.3}
+.chip[aria-pressed=true]{background:var(--leaf-soft);border-color:var(--leaf-deep)}
+.chip[aria-pressed=true] .tick{background:var(--leaf-deep);border-color:var(--leaf-deep)}
+.chip[aria-pressed=true] .tick svg{opacity:1}
+
+.dock{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(to top,var(--bg) 70%,rgba(242,249,243,0));padding:26px 20px calc(18px + env(safe-area-inset-bottom))}
+.dock .in{max-width:440px;margin:0 auto;display:flex;gap:10px}
+.btn{border:0;border-radius:16px;padding:15px 20px;font-weight:700;font-size:17px;background:var(--leaf-deep);color:#fff;flex:1;transition:opacity .15s,transform .1s}
+.btn:active{transform:scale(.99)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1.5px solid var(--line);flex:none}
+.btn.sm{padding:10px 14px;font-size:14px;border-radius:12px;flex:none}
+.fine{font-size:13px;color:var(--muted)}
+
+.cols{display:grid;gap:22px}
+@media (min-width:880px){.cols{grid-template-columns:minmax(0,5fr) minmax(0,6fr);align-items:start}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.rowhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{background:var(--leaf-soft);border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+.days{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.days li{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:10px;align-items:start;padding:14px 0;border-top:1px solid var(--line)}
+.nut{text-align:right;font-size:12px;line-height:1.45;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.nut b{display:block;font-size:15px;color:var(--ink);font-weight:700}
+.nut span{display:block}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.tiles div{background:var(--leaf-soft);border-radius:14px;padding:10px 6px;text-align:center;font-size:12px;color:var(--muted)}
+.tiles b{display:block;font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
+.days .d{padding-top:3px;display:flex;flex-direction:column;gap:2px}
+.days .d small{font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--muted);white-space:nowrap}
+.days li.today{background:var(--leaf-soft);border-radius:14px;border-top-color:transparent;padding-left:10px;padding-right:10px;margin:0 -10px}
+.days li.today + li{border-top-color:transparent}
+.days li.today .d{color:var(--leaf-deep)}
+.done{background:var(--leaf-soft);border:2px solid var(--leaf-deep);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.done h2{font-size:22px}
+.done p{color:var(--ink)}
+.fb{display:flex;flex-wrap:wrap;gap:8px}
+.fb button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-weight:600;font-size:15px}
+.fb button[aria-pressed=true]{background:var(--leaf-soft);border-color:var(--leaf-deep)}
+.demo{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.streak{display:flex;align-items:center;gap:12px;background:var(--note);color:var(--note-ink);border-radius:18px;padding:12px 16px;max-width:460px}
+.streak svg{width:30px;height:30px;flex:none}
+.streak b{font-family:var(--display);font-size:30px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.streak .st{display:flex;flex-direction:column;font-size:14px;line-height:1.35}
+.streak .st strong{font-weight:700}
+.days .body{display:flex;flex-direction:column;gap:8px}
+.days .acts{display:flex;flex-wrap:wrap;gap:8px}
+.days li:first-child{border-top:0;padding-top:0}
+.days .d{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--leaf-deep)}
+.days .n{font-weight:600;line-height:1.3}
+.days .m{font-size:13px;color:var(--muted)}
+.swap{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600}
+.swap.rec{background:var(--leaf-soft);border-color:var(--leaf-soft);color:var(--leaf-deep)}
+.sheet{position:fixed;inset:0;z-index:10;background:rgba(31,58,45,.38);display:none;align-items:flex-end;justify-content:center}
+.sheet.open{display:flex}
+.panel{background:var(--surface);width:100%;max-width:560px;max-height:90%;overflow:auto;border-radius:28px 28px 0 0;padding:24px 22px calc(26px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:20px;animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(16px)}to{transform:none}}
+@media (min-width:620px){.sheet{align-items:center}.panel{border-radius:28px}}
+.panel .phead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.panel h2{font-size:25px;font-weight:500;line-height:1.15}
+.close{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:var(--leaf-soft);font-size:22px;line-height:1;color:var(--leaf-deep)}
+.ingr{list-style:none;margin:0;padding:0}
+.ingr li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.ingr li:first-child{border-top:0}
+.ingr b{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s;display:flex;flex-direction:column;gap:14px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:30px minmax(0,1fr);gap:12px}
+.steps li::before{content:counter(s);width:30px;height:30px;border-radius:50%;background:var(--leaf-soft);color:var(--leaf-deep);font-weight:700;font-size:14px;display:grid;place-items:center}
+.meals{display:flex;flex-direction:column;gap:8px;font-size:15px}
+.meals b{font-weight:600}
+.meals span{color:var(--muted)}
+
+.prog{height:8px;border-radius:8px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--leaf);border-radius:8px;transition:width .25s}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.list label{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.list li:first-child label{border-top:0}
+.list input{appearance:none;-webkit-appearance:none;width:24px;height:24px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);margin:0;display:grid;place-items:center;cursor:pointer}
+.list input:checked{background:var(--leaf-deep);border-color:var(--leaf-deep)}
+.list input:checked::after{content:"";width:10px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.list .q{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;white-space:nowrap}
+.list .q small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.list input:checked ~ span{color:var(--muted);text-decoration:line-through}
+.pantry{display:flex;flex-wrap:wrap;gap:6px}
+.pantry span{border:1px dashed var(--line);border-radius:999px;padding:4px 10px;font-size:13px;color:var(--muted)}
+.note{background:var(--note);color:var(--note-ink);border-radius:16px;padding:14px 16px;font-size:14px}
+.list li.isnew label{background:var(--leaf-soft);border-radius:12px;border-top-color:transparent;margin:0 -8px;padding-left:8px;padding-right:8px}
+.list li.isnew + li label{border-top-color:transparent}
+.pill{font-style:normal;font-size:11px;font-weight:700;letter-spacing:.02em;background:var(--leaf-deep);color:#fff;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:2px;text-decoration:none;display:inline-block}
+.pill.mer{background:var(--note-ink)}
+.days li.free .n{color:var(--muted)}
+.days li.free .d{color:var(--muted)}
+.days li.today.free .d{color:var(--leaf-deep)}
+.swap.locked{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+.dish{border:0;background:none;padding:0;margin:0;text-align:left;font:inherit;color:var(--ink);font-weight:600;line-height:1.3;text-decoration:underline;text-decoration-color:var(--leaf);text-decoration-thickness:2px;text-underline-offset:3px}
+.dish:hover{text-decoration-color:var(--leaf-deep)}
+.mealhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mini{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;color:var(--muted)}
+.mini.on{border-color:var(--leaf-deep);color:var(--leaf-deep)}
+.notebtn{border:0;background:none;padding:2px 0;margin:0;text-align:left;font:inherit;color:inherit;display:block}
+.notebtn .link{color:var(--leaf-deep);font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:2px}
+.notebtn .mine{font-weight:600;color:var(--ink);font-size:15px}
+.noteedit{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.noteedit input{padding:10px 12px;font-size:16px}
+.addrow{display:flex;gap:8px}
+.addrow input{flex:1;min-width:0;padding:11px 14px;font-size:16px}
+.rm{border:0;background:transparent;width:32px;height:32px;border-radius:50%;font-size:20px;line-height:1;color:var(--muted)}
+.rm:hover{background:var(--leaf-soft)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.explain{font-size:14px;color:var(--muted);margin:0}
+.sfoot{position:sticky;bottom:-26px;background:var(--surface);padding:12px 0 4px;display:flex;gap:10px;border-top:1px solid var(--line)}
+.sfoot .btn{flex:1}
+.fr span small{display:block;font-size:12px;color:var(--muted);font-weight:400}
+.fr span small.chk{color:var(--note-ink);font-weight:600}
+.fr span small.old{color:#9a3b2a;font-weight:600}
+.fr .mini{margin-top:6px}
+.fromfr{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:12px;font-weight:600;color:var(--leaf-deep);background:var(--leaf-soft);border-radius:999px;padding:3px 10px 3px 8px;line-height:1.3}
+.fromfr svg{width:12px;height:12px;flex:none}
+.fromfr.soon{background:var(--note);color:var(--note-ink)}
+.ingr .home{font-size:11px;font-weight:700;color:var(--leaf-deep);background:var(--leaf-soft);border-radius:999px;padding:1px 7px;margin-left:6px}
+.fr span small.use{color:var(--leaf-deep);font-weight:600}
+.frq{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.chips2{display:flex;flex-wrap:wrap;gap:6px}
+.chipx{display:inline-flex;align-items:center;gap:2px;background:var(--leaf-soft);border-radius:999px;padding:2px 2px 2px 12px;font-size:14px;font-weight:600}
+input[type=number]{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:11px 12px;font-size:16px;-moz-appearance:textfield;appearance:textfield}
+input[type=number]:focus{outline:none;border-color:var(--leaf-deep);box-shadow:0 0 0 4px var(--leaf-soft)}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.unit{align-self:center;font-size:14px;color:var(--muted);min-width:24px}
+.tour-target{position:relative;z-index:20;background:var(--surface);border-radius:16px;box-shadow:0 0 0 4px var(--leaf-deep),0 0 0 200vmax rgba(20,40,30,.45)}
+.tour{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:440px;margin:0 auto;background:var(--surface);border-radius:20px;padding:18px 18px 16px;z-index:30;display:none;flex-direction:column;gap:8px;box-shadow:0 12px 32px rgba(0,0,0,.28);animation:up .22s ease-out}
+.tour.show{display:flex}
+.tour .stp{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.tour h2{font-size:21px}
+.tour p{font-size:16px;line-height:1.45}
+.tour .row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px}
+.tour .dots{display:flex;gap:5px}
+.tour .dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.tour .dots i.on{background:var(--leaf-deep)}
+.help{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:16px;color:var(--leaf-deep)}
+.notice .tip{background:var(--leaf-soft);color:var(--ink);border-radius:12px;padding:8px 10px;margin-top:2px}
+.notice{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:460px;margin:0 auto;background:var(--surface);border:1.5px solid var(--leaf-deep);border-radius:20px;padding:16px 18px;box-shadow:0 12px 32px rgba(31,58,45,.2);display:none;flex-direction:column;gap:8px;z-index:9;animation:up .22s ease-out}
+.notice.show{display:flex}
+.notice .h{font-size:18px;font-weight:700}
+.notice .meal{font-size:14px;color:var(--muted)}
+.notice .small{font-size:13px;color:var(--muted);line-height:1.45;display:flex;flex-direction:column;gap:2px}
+.notice .small b{color:var(--ink);font-weight:600}
+.notice .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:4px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 40px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.loading{min-height:62vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}
+.loading svg{width:220px;height:auto;max-width:70%}
+.loading .status{color:var(--muted);font-size:17px;min-height:1.5em}
+.loading .prog{width:min(260px,80%)}
+.loading .prog i{width:100%;transform-origin:left;animation:fill 2.9s linear both}
+.drop{animation:drop 2.4s cubic-bezier(.45,0,.7,1) infinite backwards}
+.drop.d2{animation-delay:.6s}.drop.d3{animation-delay:1.2s}.drop.d4{animation-delay:1.8s}
+@keyframes drop{0%{transform:translateY(-62px);opacity:0}12%{opacity:1}58%{transform:translateY(62px);opacity:1}59%,100%{transform:translateY(62px);opacity:0}}
+@keyframes fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes rise{from{opacity:.4;transform:translateY(8px)}to{opacity:1;transform:none}}
+#view{animation:rise .3s ease-out;display:flex;flex-direction:column;gap:22px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:360px){.chips{grid-template-columns:1fr}h1{font-size:28px}.hero h1{font-size:30px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 320 320" aria-hidden="true"><rect width="320" height="320" rx="76" fill="#DFF3E5"/><path d="M104 104V176A56 56 0 0 0 216 176V104" fill="none" stroke="#26784C" stroke-width="36" stroke-linecap="round"/><path d="M216 92C212 58 232 36 264 32C270 64 250 90 216 92Z" fill="#5DB884"/></svg>
+      Ukekurv
+    </div>
+    <div class="stepno" id="stepno"></div>
+  </header>
+  <div class="bar" id="bar" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <main id="view"></main>
+</div>
+<div class="sheet" id="sheet"></div>
+<div class="tour" id="tour" role="dialog" aria-modal="false" aria-labelledby="tourtitle"></div>
+<div class="notice" id="notice" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/*LOGIC-START*/
+// Ingredient: [name, category, unit, allergens, level, pack]
+// level: 0 vegan, 1 vegetarian, 2 fish, 3 meat. pack: [units per pack, pack label]
+var ING = {
+  lok:["Løk","fg","stk","",0], rodlok:["Rødløk","fg","stk","",0], hvitlok:["Hvitløk","fg","stk","",0],
+  gulrot:["Gulrot","fg","stk","",0], paprika:["Paprika","fg","stk","",0], tomat:["Tomat","fg","stk","",0],
+  cherry:["Cherrytomater","fg","g","",0], agurk:["Agurk","fg","stk","",0], salat:["Hjertesalat","fg","stk","",0],
+  spinat:["Babyspinat","fg","g","",0], brokkoli:["Brokkoli","fg","stk","",0], sotpotet:["Søtpotet","fg","stk","",0],
+  potet:["Poteter","fg","g","",0], avokado:["Avokado","fg","stk","",0], sopp:["Sjampinjong","fg","g","",0],
+  kal:["Hodekål","fg","g","",0], purre:["Purre","fg","stk","",0], lime:["Lime","fg","stk","",0],
+  sitron:["Sitron","fg","stk","",0], blomkal:["Blomkål","fg","stk","",0], squash:["Squash","fg","stk","",0], banan:["Banan","fg","stk","",0], eple:["Eple","fg","stk","",0],
+
+  kylling:["Kyllingfilet","kf","g","",3], karbonade:["Karbonadedeig","kf","g","",3], kjottdeig:["Kjøttdeig","kf","g","",3],
+  biff:["Biffstrimler","kf","g","",3], kyllingdeig:["Kyllingkjøttdeig","kf","g","",3], roktlaks:["Røkt laks","kf","g","fisk",2], kalkun:["Kalkunpålegg","kf","pk","",3],
+  laks:["Laksefilet","kf","g","fisk",2], torsk:["Torskefilet","kf","g","fisk",2], reker:["Reker, pillede","kf","g","skalldyr",2],
+  fiskekaker:["Fiskekaker","kf","g","fisk melk",2], plantebiff:["Plantebaserte burgere","kf","stk","soya gluten",0],
+
+  melk:["Lettmelk","mk","dl","melk",1], skyr:["Skyr","mk","beger","melk",1], cottage:["Cottage cheese","mk","beger","melk",1],
+  gulost:["Gulost","mk","g","melk",1], feta:["Fetaost","mk","g","melk",1], parmesan:["Parmesan","mk","g","melk",1],
+  mozzarella:["Mozzarella","mk","stk","melk",1], halloumi:["Halloumi","mk","g","melk",1], kesam:["Kesam eller lettrømme","mk","beger","melk",1],
+  flote:["Matfløte","mk","dl","melk",1], yoghurt:["Yoghurt naturell","mk","beger","melk",1], egg:["Egg","mk","stk","egg",1],
+  tofu:["Tofu, fast","mk","pk","soya",0], hummus:["Hummus","mk","beger","",0], havredrikk:["Havredrikk","mk","dl","gluten",0],
+
+  brod:["Grovbrød","br","skiver","gluten",0,[20,"brød"]], tortilla:["Fullkornstortilla","br","stk","gluten",0,[8,"pk"]],
+  burgerbrod:["Grove burgerbrød","br","stk","gluten",0,[4,"pk"]], pita:["Grove pitabrød","br","stk","gluten",0,[6,"pk"]],
+  knekke:["Knekkebrød","br","stk","gluten",0,[20,"pk"]], pizzabunn:["Fullkorns pizzabunn","br","stk","gluten",0],
+  riskaker:["Riskaker","br","stk","",0,[12,"pk"]],
+
+  havregryn:["Havregryn","tv","g","gluten",0], pasta:["Fullkornspasta","tv","g","gluten",0], ris:["Fullkornsris","tv","g","",0],
+  risnudler:["Risnudler","tv","g","",0], linser:["Røde linser","tv","g","",0], quinoa:["Quinoa","tv","g","",0],
+  kikerter:["Kikerter","tv","boks","",0], svartebonner:["Svarte bønner","tv","boks","",0], kidney:["Kidneybønner","tv","boks","",0],
+  hermtomat:["Hermetiske tomater","tv","boks","",0], mais:["Mais","tv","boks","",0], kokosmelk:["Kokosmelk, lett","tv","boks","",0],
+  tunfisk:["Tunfisk i vann","tv","boks","fisk",2], makrell:["Makrell i tomat","tv","boks","fisk",2],
+  peanottsmor:["Peanøttsmør","tv","g","notter",0], notter:["Nøtteblanding, usaltet","tv","g","notter",0],
+  granola:["Granola","tv","g","gluten notter",0], salsa:["Tacosalsa","tv","glass","",0], pesto:["Pesto","tv","glass","melk notter",1],
+
+  baer:["Frosne bær","fr","g","",0], erter:["Frosne erter","fr","g","",0], wokmix:["Wokgrønnsaker","fr","g","",0],
+  edamame:["Edamamebønner","fr","g","soya",0],
+
+  soyasaus:["Soyasaus","sm","","soya gluten",0], tacokrydder:["Tacokrydder","sm","","",0], karri:["Karri eller garam masala","sm","","",0],
+  buljong:["Grønnsaksbuljong","sm","","",0], olje:["Olivenolje","sm","","",0], oregano:["Oregano","sm","","",0], paprikapulver:["Paprikapulver","sm","","",0],
+  salt:["Salt","sm","","",0], pepper:["Pepper","sm","","",0]
+};
+var CATS = [["fg","Frukt og grønt"],["kf","Kjøtt, fisk og plantebasert"],["mk","Meieri, egg og kjøl"],["br","Brød og bakst"],["tv","Tørrvarer og hermetikk"],["fr","Frysevarer"]];
+var ALLERGENS = [["gluten","Gluten"],["melk","Melk og laktose"],["egg","Egg"],["notter","Nøtter og peanøtter"],["fisk","Fisk"],["skalldyr","Skalldyr"],["soya","Soya"]];
+var DIETS = [["alt","Spiser alt","Kjøtt, fisk og grønt",3],["pesc","Pescetarianer","Fisk, men ikke kjøtt",2],["veg","Vegetarianer","Egg og meieri er greit",1],["vegan","Veganer","Bare plantebasert",0]];
+var STYLES = [["protein","Proteinrik","Mer protein i hvert måltid"],["junk","Sunn junkfood","Burger, pizza og taco i sunnere utgave"],["rask","Raskt og enkelt","Middag på rundt 20 minutter"],["budsjett","Budsjettvennlig","Rimelige råvarer"]];
+var LIKES = [["taco","Taco og tex-mex"],["pasta","Pasta"],["asia","Wok og asiatisk"],["fisk","Fisk og sjømat"],["kylling","Kylling"],["burger","Burger og pizza"],["suppe","Supper og gryter"],["bowl","Salater og bowls"],["indisk","Indisk"],["norsk","Norsk hverdagsmat"]];
+var STORES = ["Rema 1000","Kiwi","Coop Extra","Coop Mega","Coop Prix","Meny","Spar","Joker","Bunnpris","Oda"];
+var DAYS = ["Man","Tir","Ons","Tor","Fre","Lør","Søn"];
+
+// Amounts are per person per serving.
+var DINNERS = [
+ {n:"Kyllingtaco i fullkornslefser",t:20,l:["taco","kylling"],s:["protein","junk"],i:"kylling:150 tortilla:2 paprika:.5 mais:.25 salat:.25 salsa:.25 kesam:.25",p:"tacokrydder olje"},
+ {n:"Tacobowl med karbonadedeig",t:25,l:["taco","bowl"],s:["protein"],i:"karbonade:125 ris:75 svartebonner:.25 mais:.25 tomat:1 avokado:.5 salsa:.25",p:"tacokrydder olje"},
+ {n:"Bolognese med fullkornspasta",t:30,l:["pasta"],s:["budsjett","protein"],i:"karbonade:125 pasta:90 hermtomat:.5 lok:.5 gulrot:.5 hvitlok:.25 parmesan:10",p:"oregano olje"},
+ {n:"Kremet kyllingpasta med spinat",t:25,l:["pasta","kylling"],s:["protein"],i:"kylling:125 pasta:90 flote:.75 spinat:50 sopp:60 hvitlok:.25",p:"olje"},
+ {n:"Kyllingwok med ris",t:20,l:["asia","kylling"],s:["protein"],i:"kylling:150 wokmix:200 ris:75",p:"soyasaus olje"},
+ {n:"Biffwok med risnudler",t:20,l:["asia"],s:["protein"],i:"biff:125 risnudler:70 brokkoli:.33 paprika:.5",p:"soyasaus olje"},
+ {n:"Cheeseburger med søtpotetfries",t:35,l:["burger"],s:["junk","protein"],i:"karbonade:150 burgerbrod:1 gulost:20 tomat:.5 salat:.25 sotpotet:1",p:"paprikapulver olje"},
+ {n:"Kyllingburger med søtpotetfries",t:35,l:["burger","kylling"],s:["junk","protein"],i:"kylling:150 burgerbrod:1 salat:.25 tomat:.5 sotpotet:1 kesam:.25",p:"paprikapulver olje"},
+ {n:"Fullkornspizza med kylling",t:25,l:["burger","kylling"],s:["junk"],i:"pizzabunn:.5 kylling:80 mozzarella:.5 hermtomat:.25 paprika:.5 spinat:20",p:"oregano"},
+ {n:"Kylling tikka masala",t:30,l:["indisk","kylling"],s:["protein"],i:"kylling:150 ris:75 hermtomat:.5 yoghurt:.25 lok:.5 hvitlok:.25",p:"karri olje"},
+ {n:"Karbonader med poteter og erter",t:35,l:["norsk"],s:["budsjett","protein"],i:"karbonade:150 potet:250 erter:80 lok:.5",p:"olje"},
+ {n:"Kyllinggryte med rotgrønnsaker",t:40,l:["suppe","norsk"],s:["budsjett"],i:"kylling:125 gulrot:1 potet:200 purre:.25",p:"buljong olje"},
+ {n:"Chili con carne med ris",t:35,l:["suppe","taco"],s:["budsjett","protein"],i:"kjottdeig:100 kidney:.5 hermtomat:.5 lok:.5 paprika:.5 ris:60",p:"tacokrydder olje"},
+ {n:"Kyllingsalat med avokado og quinoa",t:20,l:["bowl","kylling"],s:["protein"],i:"kylling:125 salat:.5 avokado:.5 cherry:100 agurk:.25 quinoa:50",p:"olje"},
+ {n:"Kyllingkebab i grov pita",t:20,l:["burger","kylling"],s:["junk","protein"],i:"kylling:150 pita:1.5 salat:.25 tomat:.5 agurk:.25 rodlok:.25 kesam:.25",p:"paprikapulver olje"},
+
+ {n:"Ovnsbakt laks med søtpotet og brokkoli",t:30,l:["fisk"],s:["protein"],i:"laks:150 sotpotet:1 brokkoli:.33 sitron:.25",p:"olje"},
+ {n:"Laksebowl med ris og edamame",t:25,l:["fisk","bowl","asia"],s:["protein"],i:"laks:125 ris:75 edamame:50 agurk:.25 avokado:.5",p:"soyasaus"},
+ {n:"Fisketaco med torsk",t:20,l:["taco","fisk"],s:["junk"],i:"torsk:150 tortilla:2 kal:60 lime:.5 kesam:.25 avokado:.5",p:"tacokrydder olje"},
+ {n:"Torsk med poteter og gulrot",t:30,l:["norsk","fisk"],s:["budsjett"],i:"torsk:150 potet:250 gulrot:1.5 sitron:.25",p:"olje"},
+ {n:"Fiskekaker med poteter og råkost",t:20,l:["norsk","fisk"],s:["budsjett"],i:"fiskekaker:150 potet:250 gulrot:1 eple:.25",p:"olje"},
+ {n:"Rekewok med risnudler",t:15,l:["asia","fisk"],s:["protein"],i:"reker:100 risnudler:70 wokmix:200 lime:.25",p:"soyasaus olje"},
+ {n:"Tunfiskpasta med tomat",t:20,l:["pasta","fisk"],s:["budsjett","protein"],i:"tunfisk:.75 pasta:90 hermtomat:.5 lok:.5 hvitlok:.25",p:"oregano olje"},
+ {n:"Fiskesuppe med torsk",t:30,l:["suppe","fisk","norsk"],s:[],i:"torsk:125 gulrot:1 purre:.25 flote:.75 potet:100",p:"buljong"},
+
+ {n:"Halloumiburger med søtpotetfries",t:30,l:["burger"],s:["junk"],i:"halloumi:100 burgerbrod:1 salat:.25 tomat:.5 sotpotet:1",p:"paprikapulver olje"},
+ {n:"Vegetarpizza på fullkornsbunn",t:25,l:["burger"],s:["junk"],i:"pizzabunn:.5 mozzarella:.5 hermtomat:.25 paprika:.5 sopp:50 spinat:20",p:"oregano"},
+ {n:"Pestopasta med tomat og mozzarella",t:15,l:["pasta"],s:[],i:"pasta:90 pesto:.25 cherry:100 mozzarella:.5 spinat:30",p:""},
+ {n:"Omelett med grønnsaker og cottage cheese",t:15,l:[],s:["protein","budsjett"],i:"egg:3 paprika:.5 spinat:40 cottage:.5 potet:150",p:"olje"},
+ {n:"Shakshuka med egg og feta",t:25,l:["suppe"],s:["budsjett"],i:"egg:2 hermtomat:.75 paprika:.5 lok:.5 feta:40 pita:1",p:"paprikapulver olje"},
+ {n:"Gresk bowl med halloumi",t:20,l:["bowl"],s:["protein"],i:"halloumi:80 quinoa:60 agurk:.25 cherry:100 rodlok:.25 kikerter:.25",p:"oregano olje"},
+ {n:"Quesadilla med bønner og ost",t:15,l:["taco"],s:["junk","budsjett"],i:"tortilla:2 svartebonner:.5 gulost:50 mais:.25 salsa:.25 paprika:.5",p:"tacokrydder"},
+
+ {n:"Linsedal med ris",t:30,l:["indisk","suppe"],s:["budsjett","protein"],i:"linser:80 kokosmelk:.25 hermtomat:.25 lok:.5 ris:75 spinat:40 hvitlok:.25",p:"karri olje"},
+ {n:"Kikertcurry med spinat",t:25,l:["indisk"],s:["budsjett"],i:"kikerter:.5 kokosmelk:.25 hermtomat:.25 lok:.5 spinat:50 ris:75",p:"karri olje"},
+ {n:"Tofuwok med risnudler",t:20,l:["asia"],s:["protein"],i:"tofu:.5 wokmix:200 risnudler:70",p:"soyasaus olje"},
+ {n:"Bønnetaco med avokado",t:15,l:["taco"],s:["junk","budsjett"],i:"svartebonner:.5 tortilla:2 mais:.25 avokado:.5 salat:.25 salsa:.25",p:"tacokrydder"},
+ {n:"Plantebasert burger med søtpotetfries",t:30,l:["burger"],s:["junk"],i:"plantebiff:1 burgerbrod:1 salat:.25 tomat:.5 sotpotet:1",p:"paprikapulver olje"},
+ {n:"Linsebolognese med fullkornspasta",t:30,l:["pasta"],s:["budsjett","protein"],i:"linser:60 pasta:90 hermtomat:.5 lok:.5 gulrot:.5 hvitlok:.25",p:"oregano olje"},
+ {n:"Chili sin carne med ris",t:30,l:["suppe","taco"],s:["budsjett","protein"],i:"kidney:.5 svartebonner:.25 hermtomat:.5 paprika:.5 lok:.5 ris:60 mais:.25",p:"tacokrydder olje"},
+ {n:"Buddha bowl med kikerter og søtpotet",t:35,l:["bowl"],s:[],i:"kikerter:.5 sotpotet:.75 quinoa:60 spinat:40 avokado:.5 hummus:.25",p:"paprikapulver olje"},
+ {n:"Gulrot- og linsesuppe",t:30,l:["suppe","norsk"],s:["budsjett"],i:"linser:60 gulrot:2 lok:.5 kokosmelk:.25",p:"buljong karri"},
+ {n:"Peanøttnudler med tofu og edamame",t:20,l:["asia"],s:["protein"],i:"tofu:.5 risnudler:70 edamame:50 peanottsmor:20 gulrot:.5 lime:.25",p:"soyasaus"},
+ {n:"Bakt søtpotet med bønner og guacamole",t:40,l:["taco","bowl"],s:["budsjett"],i:"sotpotet:1 svartebonner:.5 avokado:.5 mais:.25 lime:.25 salsa:.25",p:"tacokrydder"},
+ {n:"Potet- og kikertpanne med spinat",t:25,l:["norsk"],s:["budsjett"],i:"potet:250 kikerter:.5 spinat:50 lok:.5 paprika:.5",p:"paprikapulver olje"},
+ {n:"Kyllingboller i tomatsaus med pasta",t:30,l:["pasta","kylling"],s:["protein","budsjett"],i:"kyllingdeig:125 pasta:80 hermtomat:.5 lok:.5 hvitlok:.25 parmesan:10",p:"oregano olje"},
+ {n:"Kyllingfajitas med paprika og løk",t:20,l:["taco","kylling"],s:["protein","junk"],i:"kylling:150 tortilla:2 paprika:1 rodlok:.5 avokado:.5 salsa:.25 lime:.25",p:"tacokrydder olje"},
+ {n:"Biffgryte med poteter og gulrot",t:35,l:["suppe","norsk"],s:["protein"],i:"biff:125 potet:200 gulrot:1 lok:.5 hermtomat:.25",p:"buljong olje"},
+ {n:"Nudelsuppe med kylling",t:25,l:["suppe","asia","kylling"],s:[],i:"kylling:100 risnudler:50 gulrot:1 purre:.25 spinat:30 lime:.25",p:"buljong soyasaus"},
+ {n:"Pestopasta med kylling",t:20,l:["pasta","kylling"],s:["protein"],i:"kylling:125 pasta:80 pesto:.2 cherry:80 spinat:30",p:"olje"},
+ {n:"Stekt ris med karbonadedeig og grønnsaker",t:20,l:["asia"],s:["budsjett","protein"],i:"karbonade:125 ris:70 wokmix:150 lok:.5",p:"soyasaus olje"},
+ {n:"Ovnsbakt kylling med poteter og brokkoli",t:40,l:["norsk","kylling"],s:["protein","budsjett"],i:"kylling:150 potet:250 brokkoli:.33 sitron:.25",p:"paprikapulver olje"},
+
+ {n:"Pasta med røkt laks og spinat",t:15,l:["pasta","fisk"],s:[],i:"roktlaks:75 pasta:80 flote:.5 spinat:50 sitron:.25",p:""},
+ {n:"Torsk i kokoskarri med ris",t:25,l:["fisk","indisk"],s:["protein"],i:"torsk:150 ris:70 kokosmelk:.25 lok:.5 paprika:.5 spinat:30",p:"karri olje"},
+ {n:"Sitronlaks med quinoasalat",t:25,l:["fisk","bowl"],s:["protein"],i:"laks:150 quinoa:50 agurk:.25 cherry:80 spinat:30 sitron:.25",p:"olje"},
+ {n:"Rekepasta med hvitløk og tomat",t:15,l:["pasta","fisk"],s:["protein"],i:"reker:100 pasta:80 cherry:100 hvitlok:.25 spinat:30 sitron:.25",p:"olje"},
+
+ {n:"Blomkålcurry med kikerter og yoghurt",t:30,l:["indisk"],s:["budsjett"],i:"blomkal:.25 kikerter:.5 hermtomat:.25 lok:.5 ris:70 yoghurt:.2",p:"karri olje"},
+ {n:"Stekt ris med egg og grønnsaker",t:20,l:["asia"],s:["budsjett","protein"],i:"egg:2 ris:75 wokmix:150 erter:40",p:"soyasaus olje"},
+ {n:"Pasta med squash, sitron og feta",t:20,l:["pasta"],s:[],i:"pasta:90 squash:.5 feta:40 hvitlok:.25 sitron:.25 spinat:30",p:"olje"},
+ {n:"Burrito med søtpotet, bønner og ost",t:30,l:["taco"],s:["junk","budsjett"],i:"tortilla:2 sotpotet:.5 svartebonner:.5 gulost:30 salsa:.25 spinat:20",p:"tacokrydder olje"},
+ {n:"Halloumitaco med avokado",t:15,l:["taco"],s:["junk"],i:"halloumi:80 tortilla:2 kal:50 avokado:.5 lime:.25 salsa:.25",p:"tacokrydder"},
+ {n:"Proteinbowl med egg, cottage cheese og quinoa",t:20,l:["bowl"],s:["protein"],i:"egg:2 cottage:.4 quinoa:50 spinat:40 cherry:80 avokado:.5",p:"olje"},
+
+ {n:"Tofu tikka med ris",t:25,l:["indisk"],s:["protein"],i:"tofu:.5 ris:70 hermtomat:.5 kokosmelk:.15 lok:.5 hvitlok:.25",p:"karri olje"},
+ {n:"Blomkåltaco med bønner og avokado",t:30,l:["taco"],s:["junk"],i:"blomkal:.25 svartebonner:.25 tortilla:2 avokado:.5 kal:40 lime:.25 salsa:.25",p:"tacokrydder olje"},
+ {n:"Pasta med kikerter, tomat og spinat",t:20,l:["pasta"],s:["budsjett","protein"],i:"pasta:90 kikerter:.5 hermtomat:.5 hvitlok:.25 spinat:40",p:"oregano olje"},
+ {n:"Stekt ris med tofu og edamame",t:20,l:["asia"],s:["protein"],i:"tofu:.5 ris:75 edamame:50 wokmix:150",p:"soyasaus olje"},
+ {n:"Bønnegryte med poteter og paprika",t:35,l:["suppe","norsk"],s:["budsjett"],i:"kidney:.5 potet:200 paprika:.5 lok:.5 hermtomat:.5 hvitlok:.25",p:"paprikapulver buljong olje"},
+ {n:"Quinoasalat med svarte bønner, mais og avokado",t:20,l:["bowl","taco"],s:["protein"],i:"quinoa:60 svartebonner:.5 mais:.25 avokado:.5 paprika:.5 lime:.5 spinat:30",p:"olje"},
+ {n:"Nudelsuppe med tofu og grønnsaker",t:20,l:["asia","suppe"],s:[],i:"tofu:.5 risnudler:50 gulrot:1 purre:.25 spinat:30 lime:.25",p:"buljong soyasaus"},
+ {n:"Ovnsbakte grønnsaker med kikerter og hummus",t:35,l:["bowl"],s:[],i:"sotpotet:.5 squash:.5 rodlok:.5 kikerter:.5 hummus:.25 spinat:30",p:"paprikapulver olje"},
+ {n:"Minestrone med bønner og pasta",t:30,l:["suppe","pasta"],s:["budsjett"],i:"pasta:40 kidney:.25 hermtomat:.5 gulrot:1 lok:.5 squash:.25 hvitlok:.25",p:"buljong oregano olje"}
+];
+// Per person per day.
+var BREAKFASTS = [
+ {n:"Havregrøt med banan og bær",s:["budsjett"],i:"havregryn:60 melk:2 banan:.5 baer:50",p:""},
+ {n:"Havregrøt på havredrikk med banan og bær",s:["budsjett"],i:"havregryn:60 havredrikk:2 banan:.5 baer:50",p:""},
+ {n:"Skyr med granola og bær",s:["protein","rask"],i:"skyr:1 granola:40 baer:50",p:""},
+ {n:"Egg og grovbrød med tomat",s:["protein"],i:"egg:2 brod:2 tomat:.5",p:""},
+ {n:"Eggerøre med cottage cheese og tomat",s:["protein"],i:"egg:2 cottage:.25 cherry:50",p:""},
+ {n:"Grovbrød med hummus og agurk",s:["rask","budsjett"],i:"brod:2 hummus:.2 agurk:.2",p:""},
+ {n:"Frukt, bær og riskaker med avokado",s:["rask"],i:"banan:1 baer:80 riskaker:2 avokado:.5",p:""}
+];
+var LUNCHES = [
+ {n:"Matpakke med kalkun, ost og agurk",s:["budsjett","rask"],i:"brod:3 kalkun:.2 gulost:20 agurk:.2",p:""},
+ {n:"Kyllingwrap med cottage cheese",s:["protein"],i:"tortilla:1 kylling:80 salat:.2 cottage:.25",p:""},
+ {n:"Tunfisksalat med egg",s:["protein"],i:"tunfisk:.5 egg:1 salat:.25 cherry:60 mais:.15",p:""},
+ {n:"Makrell i tomat på grovbrød",s:["budsjett","rask"],i:"brod:3 makrell:.5 agurk:.2",p:""},
+ {n:"Grovbrød med egg og avokado",s:["rask"],i:"brod:3 egg:1 avokado:.5",p:""},
+ {n:"Cottage cheese med knekkebrød og grønt",s:["protein","rask"],i:"cottage:.4 knekke:3 paprika:.5 agurk:.2",p:""},
+ {n:"Hummuswrap med grønnsaker",s:["rask","budsjett"],i:"tortilla:1.5 hummus:.25 gulrot:.5 spinat:20 paprika:.25",p:""},
+ {n:"Kikertsalat med avokado",s:["protein"],i:"kikerter:.5 agurk:.25 cherry:80 rodlok:.15 sitron:.15 avokado:.5",p:"olje"},
+ {n:"Bønnesalat med mais og paprika",s:["budsjett","protein"],i:"svartebonner:.5 mais:.25 paprika:.5 lime:.25",p:"olje"}
+];
+
+// Goal for the food. "lett" trims carbs and fat but keeps protein and vegetables, so meals stay filling.
+var GOALS = [["lett","Lettere uke","Mindre ris, pasta og fett. Kjøtt, fisk, bønner og grønt beholdes, så du holder deg mett."],["vanlig","Vanlig","Vanlige porsjoner"],["mer","Mer mat","Større porsjoner med mer protein og karbohydrater"]];
+var ROLE = {};
+"potet sotpotet havregryn pasta ris risnudler quinoa brod tortilla pita knekke riskaker granola".split(" ").forEach(function(id){ROLE[id]="carb";});
+"avokado gulost feta parmesan mozzarella halloumi flote kokosmelk pesto peanottsmor notter hummus".split(" ").forEach(function(id){ROLE[id]="fat";});
+"kyllingdeig roktlaks kylling karbonade kjottdeig biff kalkun laks torsk reker fiskekaker plantebiff egg tofu cottage skyr kesam yoghurt linser kikerter svartebonner kidney edamame tunfisk makrell".split(" ").forEach(function(id){ROLE[id]="prot";});
+var MULT = {lett:{carb:.7,fat:.7,prot:1},vanlig:{carb:1,fat:1,prot:1},mer:{carb:1.3,fat:1.15,prot:1.25}};
+// Amount per person after the goal is applied. Lefser and pita stay in halves.
+function scaleQ(id,q,goal){
+  var m=(MULT[goal]||MULT.vanlig)[ROLE[id]]||1, v=q*m;
+  if(m!==1 && (id==="tortilla"||id==="pita")) v=Math.max(.5,Math.round(v*2)/2);
+  return v;
+}
+function prep(list){
+  list.forEach(function(r){
+    r.ing = r.i.trim().split(/\s+/).map(function(x){var a=x.split(":");return [a[0],parseFloat(a[1])];});
+    r.pan = r.p ? r.p.trim().split(/\s+/) : [];
+    var lv=0, al={};
+    r.ing.map(function(x){return x[0];}).concat(r.pan).forEach(function(id){
+      var g=ING[id]; if(!g) throw new Error("Ukjent ingrediens: "+id);
+      if(g[4]>lv) lv=g[4];
+      g[3].split(" ").forEach(function(a){ if(a) al[a]=1; });
+    });
+    r.level=lv; r.al=Object.keys(al);
+  });
+}
+prep(DINNERS); prep(BREAKFASTS); prep(LUNCHES);
+
+function dietLevel(d){ for(var k=0;k<DIETS.length;k++) if(DIETS[k][0]===d) return DIETS[k][3]; return 3; }
+function ok(r,prof){
+  if(r.level>dietLevel(prof.diet)) return false;
+  for(var k=0;k<r.al.length;k++) if(prof.allergens.indexOf(r.al[k])>=0) return false;
+  return true;
+}
+function overlap(a,b){ var n=0; a.forEach(function(x){ if(b.indexOf(x)>=0) n++; }); return n; }
+function styleTags(r){ var s=(r.s||[]).slice(); if(r.t && r.t<=20 && s.indexOf("rask")<0) s.push("rask"); return s; }
+
+// seen: dinners used in earlier weeks, oldest first. They are only picked when nothing new is left.
+function pickDinners(prof,rnd,seen){
+  seen=seen||[];
+  var lv=dietLevel(prof.diet);
+  var c=[],fresh=0;
+  DINNERS.forEach(function(r,idx){
+    if(!ok(r,prof)) return;
+    var sc=3*overlap(r.l,prof.likes)+2*overlap(styleTags(r),prof.styles)+rnd()*2.5;
+    if(prof.have && prof.have.length) sc+=1.5*r.ing.filter(function(x){return prof.have.indexOf(x[0])>=0;}).length;
+    // Meat, fish and salad at home that must be used soon: these dinners come first, even if you had them lately.
+    var soon=prof.haveSoon?r.ing.filter(function(x){return prof.haveSoon.indexOf(x[0])>=0;}).length:0;
+    if(soon) sc+=6*soon;
+    if(lv===2 && r.level===2) sc+=1.5;
+    if(prof.goal==="lett"||prof.goal==="mer"){
+      var n=nutrition(idx,prof.goal);
+      if(prof.goal==="lett") sc+=8*(4*n.p/n.kcal)+(n.kcal<=500?1.5:0);
+      else sc+=(n.kcal-500)/120;
+    }
+    var at=seen.indexOf(idx);
+    if(at>=0) sc-=soon?3+0.5*at:100+4*at; else fresh++;
+    c.push({idx:idx,sc:sc});
+  });
+  var picked=[];
+  while(picked.length<7 && c.length){
+    var best=-1,bv=-1e9;
+    c.forEach(function(x,k){
+      var r=DINNERS[x.idx],pen=0;
+      picked.forEach(function(pi){
+        var q=DINNERS[pi];
+        if(r.l[0] && r.l[0]===q.l[0]) pen+=2;
+        if(r.ing[0][0]===q.ing[0][0]) pen+=1.5;
+        if(r.n.split(" ")[0]===q.n.split(" ")[0]) pen+=3;
+      });
+      if(x.sc-pen>bv){bv=x.sc-pen;best=k;}
+    });
+    picked.push(c.splice(best,1)[0].idx);
+  }
+  var unique=picked.length;
+  for(var k=0;picked.length<7 && unique>0;k++) picked.push(picked[k%unique]);
+  c.sort(function(a,b){return b.sc-a.sc;});
+  return {dinners:picked,reserve:c.map(function(x){return x.idx;}),unique:unique,fresh:fresh,pool:fresh+seen.filter(function(i){return ok(DINNERS[i],prof);}).length};
+}
+function pickMeals(list,prof,rnd,prev){
+  var c=[],was=(prev||[]).map(function(m){return m.idx;});
+  list.forEach(function(r,idx){ if(ok(r,prof)) c.push({idx:idx,sc:2*overlap(styleTags(r),prof.styles)+((prof.goal==="lett"||prof.goal==="mer")&&r.s.indexOf("protein")>=0?1.5:0)+rnd()*1.5-(was.indexOf(idx)>=0?4:0)}); });
+  c.sort(function(a,b){return b.sc-a.sc;});
+  if(!c.length) return [];
+  if(c.length===1) return [{idx:c[0].idx,days:7}];
+  return [{idx:c[0].idx,days:4},{idx:c[1].idx,days:3}];
+}
+function pickSnacks(prof){
+  var s=[["eple",3],["banan",2]], lv=dietLevel(prof.diet), al=prof.allergens;
+  var skyrOk=lv>=1 && al.indexOf("melk")<0, nutOk=al.indexOf("notter")<0;
+  if(prof.goal==="lett"){ if(skyrOk) s.push(["skyr",3]); else s.push(["gulrot",4]); }
+  else if(prof.styles.indexOf("protein")>=0 && skyrOk) s.push(["skyr",3]);
+  else if(nutOk) s.push(["notter",100]);
+  else { s.push(["gulrot",3]); s.push(["hummus",.5]); }
+  if(prof.goal==="mer" && nutOk && s.every(function(x){return x[0]!=="notter";})) s.push(["notter",100]);
+  return s;
+}
+function makePlan(prof,rnd,seen,prev){
+  rnd=rnd||Math.random; prev=prev||{};
+  var d=pickDinners(prof,rnd,seen);
+  return {dinners:d.dinners,reserve:d.reserve,unique:d.unique,fresh:d.fresh,pool:d.pool,bf:pickMeals(BREAKFASTS,prof,rnd,prev.bf),lu:pickMeals(LUNCHES,prof,rnd,prev.lu),snacks:pickSnacks(prof)};
+}
+// The amount a recipe shows for one ingredient. The shopping list adds up exactly these numbers.
+function amt(q,unit){
+  if(unit==="g") return Math.max(5,Math.round(q/5)*5);
+  return Math.max(.25,Math.round(q*4)/4);
+}
+// Free days: day indexes (0-6) with no dinner to shop for. Old plans have none.
+function isFree(plan,k){ return !!(plan.free && plan.free.indexOf(k)>=0); }
+function freeDays(n){ var f=[]; for(var k=Math.max(3,Math.min(7,n||7));k<7;k++) f.push(k); return f; }
+function totals(plan,persons,goal){
+  var t={},pan={};
+  function add(r,mult){
+    r.ing.forEach(function(x){ t[x[0]]=(t[x[0]]||0)+scaleQ(x[0],x[1],goal)*mult; });
+    r.pan.forEach(function(id){ pan[id]=1; });
+  }
+  plan.dinners.forEach(function(i,k){
+    if(isFree(plan,k)) return;
+    var r=DINNERS[i];
+    r.ing.forEach(function(x){ t[x[0]]=(t[x[0]]||0)+amt(scaleQ(x[0],x[1],goal)*persons,ING[x[0]][2]); });
+    r.pan.forEach(function(id){ pan[id]=1; });
+    pan.salt=1; pan.pepper=1;
+  });
+  if(!plan.noBf) plan.bf.forEach(function(m){ add(BREAKFASTS[m.idx],persons*m.days); });
+  if(!plan.noLu) plan.lu.forEach(function(m){ add(LUNCHES[m.idx],persons*m.days); });
+  plan.snacks.forEach(function(s){ t[s[0]]=(t[s[0]]||0)+s[1]*persons; });
+  return {items:t,pantry:Object.keys(pan)};
+}
+function num(v){ return String(v).replace(".",","); }
+function fmt(id,total){
+  var g=ING[id],unit=g[2],pack=g[5];
+  total=Math.round(total*1000)/1000;
+  if(pack){ return {main:Math.ceil(total/pack[0])+" "+pack[1],sub:Math.ceil(total)+" "+unit}; }
+  if(unit==="g"){ var v=Math.ceil(total/50)*50; return {main:v>=1000?num(v/1000)+" kg":v+" g"}; }
+  if(unit==="dl"){ var d=Math.ceil(total*2)/2; return {main:d>=10?num(d/10)+" l":num(d)+" dl"}; }
+  var c=Math.ceil(total);
+  return {main:c+" "+(unit==="boks"&&c>1?"bokser":unit)};
+}
+// What the list tells you to buy, as a number in the ingredient's own unit (mirrors fmt).
+function boughtQty(id,total){
+  var g=ING[id],unit=g[2],pack=g[5];
+  total=Math.round(total*1000)/1000;
+  if(pack) return Math.ceil(total/pack[0])*pack[0];
+  if(unit==="g") return Math.ceil(total/50)*50;
+  if(unit==="dl") return Math.ceil(total*2)/2;
+  return Math.ceil(total);
+}
+// have: amounts already at home, by ingredient id. They are taken off what you need to buy.
+function grouped(plan,persons,goal,have){
+  var tt=totals(plan,persons,goal),out=[],hv={},fromHave=[];
+  if(have) Object.keys(tt.items).forEach(function(id){
+    var h=Math.min(have[id]||0,tt.items[id]);
+    if(h<=1e-9) return;
+    if(tt.items[id]-h<=1e-9){ fromHave.push({id:id,name:ING[id][0],main:qty(h,ING[id][2])}); delete tt.items[id]; }
+    else { tt.items[id]-=h; hv[id]=h; }
+  });
+  CATS.forEach(function(c){
+    var rows=Object.keys(tt.items).filter(function(id){return ING[id][1]===c[0];})
+      .sort(function(a,b){return ING[a][0].localeCompare(ING[b][0],"nb");})
+      .map(function(id){var f=fmt(id,tt.items[id]),sub=f.sub||"";
+        if(hv[id]) sub=(sub?sub+" · ":"")+qty(hv[id],ING[id][2])+" hjemme";
+        return {id:id,name:ING[id][0],main:f.main,sub:sub,tot:tt.items[id]};});
+    if(rows.length) out.push({key:c[0],label:c[1],rows:rows});
+  });
+  fromHave.sort(function(a,b){return a.name.localeCompare(b.name,"nb");});
+  return {groups:out,fromHave:fromHave,pantry:tt.pantry.map(function(id){return {id:id,name:ING[id][0]};}).sort(function(a,b){return a.name.localeCompare(b.name,"nb");})};
+}
+// How long a raw ingredient keeps: "snart" (days), "stund" (about a week), "lenge".
+var SOON=["salat","spinat","avokado","sopp","agurk","cherry","tomat","banan","edamame"];
+function shelf(id){
+  var g=ING[id]; if(!g) return "annet";
+  if(g[1]==="kf"||SOON.indexOf(id)>=0) return "snart";
+  if(g[1]==="tv"||g[1]==="fr") return "lenge";
+  return "stund";
+}
+
+var RIS="Kok risen etter anvisningen på pakken.";
+var NUDLER="Legg risnudlene i kokende vann etter anvisningen på pakken, og sil av vannet.";
+var PASTA="Kok pastaen etter anvisningen på pakken.";
+var FRIES="Sett ovnen på 220 °C. Skjær søtpotetene i staver, vend dem i olje, paprikapulver og salt, og stek dem i 25–30 minutter. Snu dem halvveis.";
+var STEPS = {
+ "Kyllingtaco i fullkornslefser":["Skjær kyllingen i strimler og stek i olje på middels høy varme i 6–8 minutter, til den er gjennomstekt. Rør inn tacokrydder og en skvett vann.","Kutt paprika og salat, og hell vannet av maisen.","Varm lefsene etter anvisningen på pakken.","Fyll lefsene med kylling, grønnsaker, salsa og en skje kesam."],
+ "Tacobowl med karbonadedeig":[RIS,"Brun karbonadedeigen i olje, og rør inn tacokrydder og en skvett vann. La det småkoke i 5 minutter.","Skyll bønnene og varm dem sammen med maisen. Kutt tomat og avokado.","Legg ris i skåler og topp med kjøtt, bønner, mais, tomat, avokado og salsa."],
+ "Bolognese med fullkornspasta":["Finhakk løk, hvitløk og gulrot, og stek det mykt i olje i 5 minutter.","Ha i karbonadedeigen og brun den godt.","Tilsett hermetiske tomater og oregano. La sausen småkoke i 15–20 minutter, og smak til med salt og pepper.",PASTA+" Server med revet parmesan."],
+ "Kremet kyllingpasta med spinat":[PASTA,"Skjær kyllingen i biter og stek i olje i 6–8 minutter, til den er gjennomstekt.","Ha i skivet sopp og finhakket hvitløk, og stek i 3 minutter.","Hell i matfløte og la det småkoke i 3–4 minutter. Vend inn spinat og pasta, og smak til med salt og pepper."],
+ "Kyllingwok med ris":[RIS,"Skjær kyllingen i strimler og stek i olje på høy varme i 5–6 minutter, til den er gjennomstekt.","Ha i wokgrønnsakene og stek i 3–4 minutter.","Smak til med soyasaus og server med ris."],
+ "Biffwok med risnudler":[NUDLER,"Del brokkolien i små buketter og skjær paprikaen i strimler.","Stek biffstrimlene raskt i olje på høy varme i 1–2 minutter, og ta dem ut av pannen.","Stek grønnsakene i 3–4 minutter. Ha biffen og nudlene tilbake i pannen, og smak til med soyasaus."],
+ "Cheeseburger med søtpotetfries":[FRIES,"Form karbonadedeigen til burgere og krydre med salt og pepper.","Stek burgerne 4–5 minutter på hver side, til de er gjennomstekte. Legg på ost det siste minuttet.","Varm brødene og fyll dem med burger, salat og tomat. Server med søtpotetfries."],
+ "Kyllingburger med søtpotetfries":[FRIES,"Del kyllingfiletene i to på langs så de blir tynnere, og krydre med salt og pepper.","Stek kyllingen 4–5 minutter på hver side, til den er gjennomstekt.","Varm brødene og fyll dem med kylling, salat, tomat og kesam. Server med søtpotetfries."],
+ "Fullkornspizza med kylling":["Sett ovnen på 225 °C.","Skjær kyllingen i små biter og stek dem i en varm panne i 5–6 minutter, til de er gjennomstekte.","Mos de hermetiske tomatene med oregano og litt salt, og fordel sausen på pizzabunnen.","Topp med kylling, paprika i strimler og mozzarella i biter. Stek pizzaen i 10–12 minutter, og strø over spinat før servering."],
+ "Kylling tikka masala":[RIS,"Finhakk løk og hvitløk, og stek det mykt i olje sammen med karri eller garam masala.","Skjær kyllingen i biter, ha den i pannen og stek i 3–4 minutter.","Tilsett hermetiske tomater og la det småkoke i 10–12 minutter, til kyllingen er gjennomstekt. Ta pannen av varmen, rør inn yoghurt og smak til med salt."],
+ "Karbonader med poteter og erter":["Kok potetene møre, i 20–25 minutter.","Form karbonadedeigen til flate kaker og krydre med salt og pepper.","Stek karbonadene i olje 4–5 minutter på hver side, til de er gjennomstekte.","Stek løk i skiver i samme panne til den er gyllen. Kok ertene i 2–3 minutter, og server alt sammen."],
+ "Kyllinggryte med rotgrønnsaker":["Skjær kylling, gulrot og potet i biter, og purre i ringer.","Brun kyllingen i olje i en gryte.","Ha i grønnsakene, og hell på vann og buljong til det så vidt dekker.","La gryten småkoke under lokk i 20–25 minutter, til potetene er møre og kyllingen er gjennomkokt. Smak til med salt og pepper."],
+ "Chili con carne med ris":[RIS,"Finhakk løk og paprika, og stek det mykt i olje. Ha i kjøttdeigen og brun den.","Tilsett tacokrydder, hermetiske tomater og skylte kidneybønner.","La det småkoke i 15–20 minutter. Smak til med salt og server med ris."],
+ "Kyllingsalat med avokado og quinoa":["Kok quinoaen etter anvisningen på pakken, og la den avkjøle litt.","Stek kyllingfileten i olje 5–6 minutter på hver side, til den er gjennomstekt. Skjær den i skiver.","Kutt salat, avokado, cherrytomater og agurk.","Bland alt i en bolle, og drypp over olivenolje, salt og pepper."],
+ "Kyllingkebab i grov pita":["Skjær kyllingen i tynne strimler, krydre med paprikapulver, salt og pepper, og stek i olje i 6–8 minutter, til den er gjennomstekt.","Kutt salat, tomat og agurk, og skjær rødløken i tynne skiver.","Rør kesam sammen med litt salt og pepper til en dressing.","Varm pitabrødene og fyll dem med kylling, grønnsaker og dressing."],
+ "Ovnsbakt laks med søtpotet og brokkoli":["Sett ovnen på 200 °C. Skjær søtpoteten i terninger, vend dem i olje og salt, og stek dem i 15 minutter.","Legg laksen og brokkoli i buketter på samme brett. Krydre med salt og pepper.","Stek videre i 12–15 minutter, til laksen flaker seg.","Press over sitron før servering."],
+ "Laksebowl med ris og edamame":[RIS,"Stek laksen i en varm panne 3–4 minutter på hver side, til den flaker seg.","Kok edamamebønnene i 2–3 minutter. Skjær agurk og avokado i skiver.","Legg ris i skåler, topp med laks og grønnsaker, og drypp over soyasaus."],
+ "Fisketaco med torsk":["Skjær torsken i biter, krydre med tacokrydder og stek i olje 2–3 minutter på hver side, til fisken flaker seg.","Finsnitt kålen og bland den med litt limesaft og en klype salt.","Rør kesam sammen med resten av limesaften. Skjær avokadoen i skiver.","Varm lefsene og fyll dem med fisk, kål, avokado og kesam."],
+ "Torsk med poteter og gulrot":["Kok poteter og gulrot i biter møre, i 20–25 minutter.","Sett ovnen på 200 °C. Legg torsken i en ildfast form, pensle med olje og krydre med salt og pepper.","Stek torsken i 12–15 minutter, til den flaker seg.","Server med poteter, gulrot og en sitronbåt."],
+ "Fiskekaker med poteter og råkost":["Kok potetene møre, i 20–25 minutter.","Riv gulrot og eple grovt, og bland det til en råkost.","Varm fiskekakene i olje, 3–4 minutter på hver side.","Server fiskekakene med poteter og råkost."],
+ "Rekewok med risnudler":[NUDLER,"Stek wokgrønnsakene i olje på høy varme i 3–4 minutter.","Ha i rekene og nudlene, og varm alt raskt gjennom i 1–2 minutter.","Smak til med soyasaus og limesaft."],
+ "Tunfiskpasta med tomat":[PASTA,"Finhakk løk og hvitløk, og stek det mykt i olje.","Tilsett hermetiske tomater og oregano, og la sausen småkoke i 8–10 minutter.","Hell vannet av tunfisken og vend den inn i sausen sammen med pastaen. Smak til med salt og pepper."],
+ "Fiskesuppe med torsk":["Skjær gulrot og potet i små terninger, og purre i ringer.","Kok grønnsakene i vann og buljong i 10–12 minutter, til de er møre.","Hell i matfløte og gi suppen et oppkok.","Skjær torsken i biter, legg dem i suppen og la dem trekke i 4–5 minutter uten at suppen koker. Smak til med salt og pepper."],
+ "Halloumiburger med søtpotetfries":[FRIES,"Skjær halloumien i tykke skiver og stek dem gylne i en varm panne, 2–3 minutter på hver side.","Varm brødene og fyll dem med halloumi, salat og tomat. Server med søtpotetfries."],
+ "Vegetarpizza på fullkornsbunn":["Sett ovnen på 225 °C.","Mos de hermetiske tomatene med oregano og litt salt, og fordel sausen på pizzabunnen.","Topp med paprika i strimler, skivet sopp og mozzarella i biter.","Stek pizzaen i 10–12 minutter, og strø over spinat før servering."],
+ "Pestopasta med tomat og mozzarella":[PASTA,"Del cherrytomatene i to og riv mozzarellaen i biter.","Hell av vannet og vend pastaen sammen med pesto og spinat, til spinaten faller sammen.","Topp med tomater og mozzarella."],
+ "Omelett med grønnsaker og cottage cheese":["Skjær potetene i små terninger og stek dem i olje i 10–12 minutter, til de er møre.","Ha i paprika i biter og spinat, og stek i 2 minutter.","Visp eggene med salt og pepper, og hell dem over grønnsakene.","Stek på middels varme under lokk i 4–5 minutter, til eggene har stivnet. Server med cottage cheese."],
+ "Shakshuka med egg og feta":["Finhakk løk og paprika, og stek det mykt i olje sammen med paprikapulver.","Tilsett hermetiske tomater og la sausen småkoke i 10 minutter. Smak til med salt og pepper.","Lag små groper i sausen og knekk et egg i hver. Legg på lokk og la eggene stivne i 5–7 minutter.","Smuldre over feta og server med varmt pitabrød."],
+ "Gresk bowl med halloumi":["Kok quinoaen etter anvisningen på pakken.","Kutt agurk, cherrytomater og rødløk. Skyll kikertene.","Skjær halloumien i skiver og stek dem gylne, 2–3 minutter på hver side.","Bland quinoa, grønnsaker og kikerter med olivenolje og oregano, og topp med halloumi."],
+ "Quesadilla med bønner og ost":["Skyll bønnene og mos dem grovt med en gaffel. Rør inn tacokrydder, mais og paprika i små biter.","Fordel bønneblandingen og revet ost på halvparten av hver lefse, og brett dem sammen.","Stek quesadillaene i en tørr panne 2–3 minutter på hver side, til de er gylne og osten har smeltet.","Skjær dem i biter og server med salsa."],
+ "Linsedal med ris":[RIS,"Finhakk løk og hvitløk, og stek det mykt i olje sammen med karri eller garam masala.","Skyll linsene og ha dem i gryten med hermetiske tomater, kokosmelk og 2 dl vann per person.","La det småkoke i 15–20 minutter, til linsene er møre. Vend inn spinat, smak til med salt og server med ris."],
+ "Kikertcurry med spinat":[RIS,"Finhakk løken og stek den myk i olje sammen med karri eller garam masala.","Tilsett skylte kikerter, hermetiske tomater og kokosmelk, og la det småkoke i 10–12 minutter.","Vend inn spinat, smak til med salt og server med ris."],
+ "Tofuwok med risnudler":[NUDLER,"Skjær tofuen i terninger og stek dem gylne i olje, i 5–6 minutter.","Ha i wokgrønnsakene og stek i 3–4 minutter.","Vend inn nudlene og smak til med soyasaus."],
+ "Bønnetaco med avokado":["Skyll bønnene og varm dem i en kjele med tacokrydder og en skvett vann i 5 minutter.","Kutt salat og avokado, og hell vannet av maisen.","Varm lefsene etter anvisningen på pakken.","Fyll lefsene med bønner, mais, salat, avokado og salsa."],
+ "Plantebasert burger med søtpotetfries":[FRIES,"Stek burgerne i olje etter anvisningen på pakken.","Varm brødene og fyll dem med burger, salat og tomat. Server med søtpotetfries."],
+ "Linsebolognese med fullkornspasta":["Finhakk løk, hvitløk og gulrot, og stek det mykt i olje i 5 minutter.","Skyll linsene og ha dem i gryten med hermetiske tomater, oregano og 2 dl vann per person.","La sausen småkoke i 15–20 minutter, til linsene er møre. Smak til med salt og pepper.",PASTA+" Server med sausen."],
+ "Chili sin carne med ris":[RIS,"Finhakk løk og paprika, og stek det mykt i olje sammen med tacokrydder.","Tilsett hermetiske tomater, skylte bønner og mais.","La det småkoke i 15 minutter. Smak til med salt og server med ris."],
+ "Buddha bowl med kikerter og søtpotet":["Sett ovnen på 220 °C. Skjær søtpoteten i terninger, vend dem i olje, paprikapulver og salt, og stek dem i 20–25 minutter.","Kok quinoaen etter anvisningen på pakken.","Skyll kikertene og legg dem på brettet de siste 10 minuttene.","Legg quinoa og spinat i skåler, og topp med søtpotet, kikerter, avokado i skiver og en skje hummus."],
+ "Gulrot- og linsesuppe":["Skjær gulrot og løk i biter.","Kok gulrot, løk og skylte linser i 4 dl vann per person med buljong og karri i 15–20 minutter, til alt er mørt.","Hell i kokosmelk og kjør suppen glatt med en stavmikser.","Smak til med salt og pepper."],
+ "Peanøttnudler med tofu og edamame":[NUDLER,"Rør peanøttsmør, soyasaus, limesaft og litt varmt vann sammen til en saus.","Skjær tofuen i terninger og stek dem gylne i en varm panne, i 5–6 minutter. Kok edamamebønnene i 2–3 minutter.","Vend nudler, tofu, edamame og revet gulrot sammen med sausen."],
+ "Bakt søtpotet med bønner og guacamole":["Sett ovnen på 200 °C. Prikk søtpotetene med en gaffel og bak dem i 35–40 minutter, til de er myke tvers gjennom.","Skyll bønnene og varm dem med mais, tacokrydder og en skvett vann.","Mos avokado med limesaft og en klype salt til guacamole.","Del søtpotetene på langs og fyll dem med bønner, guacamole og salsa."],
+ "Potet- og kikertpanne med spinat":["Skjær potetene i små terninger og stek dem i olje i 12–15 minutter, til de er møre.","Ha i finhakket løk og paprika i biter, og stek i 3–4 minutter.","Tilsett skylte kikerter og paprikapulver, og stek i 2–3 minutter.","Vend inn spinat og smak til med salt og pepper."],
+ "Kyllingboller i tomatsaus med pasta":["Finhakk løk og hvitløk. Bland halvparten med kyllingkjøttdeigen, salt og pepper, og form små boller.","Stek bollene i olje i 6–8 minutter, til de er gjennomstekte.","Stek resten av løken og hvitløken myk i en gryte, tilsett hermetiske tomater og oregano, og la sausen småkoke i 10 minutter. Ha bollene i sausen.",PASTA+" Server med revet parmesan."],
+ "Kyllingfajitas med paprika og løk":["Skjær kylling, paprika og rødløk i strimler.","Stek kyllingen i olje på høy varme i 5–6 minutter, til den er gjennomstekt. Ha i grønnsakene og tacokrydder, og stek i 3–4 minutter.","Mos avokadoen med limesaft og en klype salt.","Varm lefsene og fyll dem med kylling, grønnsaker, avokado og salsa."],
+ "Biffgryte med poteter og gulrot":["Skjær potet og gulrot i biter, og finhakk løken.","Brun biffstrimlene raskt i olje i en gryte, og ta dem ut.","Stek løken myk. Ha i potet, gulrot og hermetiske tomater, og hell på vann og buljong til det så vidt dekker. La det småkoke i 20 minutter, til potetene er møre.","Ha biffen tilbake i gryten, varm gjennom og smak til med salt og pepper."],
+ "Nudelsuppe med kylling":["Skjær kyllingen i tynne strimler, gulroten i skiver og purren i ringer.","Kok opp 4 dl vann per person med buljong. Ha i kylling, gulrot og purre, og la det småkoke i 8–10 minutter, til kyllingen er gjennomkokt.","Ha i risnudlene og kok i 3–4 minutter, til de er myke.","Vend inn spinat, og smak til med soyasaus og limesaft."],
+ "Pestopasta med kylling":[PASTA,"Skjær kyllingen i biter og stek i olje i 6–8 minutter, til den er gjennomstekt.","Del cherrytomatene i to.","Hell av vannet og vend pastaen sammen med pesto, kylling, tomater og spinat."],
+ "Stekt ris med karbonadedeig og grønnsaker":[RIS,"Finhakk løken og stek den myk i olje. Ha i karbonadedeigen og brun den.","Ha i wokgrønnsakene og stek i 3–4 minutter.","Vend inn risen og smak til med soyasaus."],
+ "Ovnsbakt kylling med poteter og brokkoli":["Sett ovnen på 200 °C. Skjær potetene i båter, vend dem i olje, paprikapulver og salt, og stek dem i 15 minutter.","Krydre kyllingfiletene med salt, pepper og paprikapulver, og legg dem på brettet.","Stek videre i 20 minutter, til kyllingen er gjennomstekt. Legg brokkoli i buketter på brettet de siste 10 minuttene.","Press over sitron før servering."],
+ "Pasta med røkt laks og spinat":[PASTA,"Varm matfløten i en panne og la den småkoke i 2–3 minutter.","Vend inn spinat, pasta og røkt laks i strimler.","Smak til med sitronsaft og pepper."],
+ "Torsk i kokoskarri med ris":[RIS,"Finhakk løken og skjær paprikaen i biter. Stek det mykt i olje sammen med karri.","Hell i kokosmelk og la sausen småkoke i 5 minutter.","Skjær torsken i biter, legg dem i sausen og la dem trekke under lokk i 5–6 minutter, til fisken flaker seg. Vend inn spinat og smak til med salt."],
+ "Sitronlaks med quinoasalat":["Kok quinoaen etter anvisningen på pakken.","Krydre laksen med salt og pepper, og stek den i olje 3–4 minutter på hver side, til den flaker seg.","Kutt agurk og cherrytomater, og bland dem med quinoa, spinat og sitronsaft.","Server laksen på salaten."],
+ "Rekepasta med hvitløk og tomat":[PASTA,"Finhakk hvitløken og del cherrytomatene i to. Stek dem i olje i 3–4 minutter.","Ha i rekene og varm dem gjennom i 1–2 minutter.","Vend inn pasta og spinat, og smak til med sitronsaft, salt og pepper."],
+ "Blomkålcurry med kikerter og yoghurt":[RIS,"Finhakk løken og stek den myk i olje sammen med karri.","Del blomkålen i små buketter og ha dem i gryten med skylte kikerter, hermetiske tomater og 1 dl vann per person. La det småkoke under lokk i 12–15 minutter, til blomkålen er mør.","Ta gryten av varmen, rør inn yoghurt og smak til med salt."],
+ "Stekt ris med egg og grønnsaker":[RIS,"Stek wokgrønnsakene og ertene i olje på høy varme i 3–4 minutter.","Skyv grønnsakene til siden, knekk eggene i pannen og rør til de har stivnet.","Vend inn risen og smak til med soyasaus."],
+ "Pasta med squash, sitron og feta":[PASTA,"Skjær squashen i terninger og finhakk hvitløken. Stek det i olje i 5–6 minutter, til squashen er gyllen.","Vend inn pasta, spinat og sitronsaft.","Smuldre over feta, og smak til med salt og pepper."],
+ "Burrito med søtpotet, bønner og ost":["Sett ovnen på 220 °C. Skjær søtpoteten i små terninger, vend dem i olje, tacokrydder og salt, og stek dem i 20 minutter.","Skyll bønnene og varm dem i en kjele.","Fordel søtpotet, bønner, spinat, revet ost og salsa på lefsene.","Rull lefsene sammen. Stek dem gjerne i en tørr panne i 1–2 minutter på hver side."],
+ "Halloumitaco med avokado":["Skjær halloumien i staver, vend dem i tacokrydder og stek dem gylne i en varm panne, 2–3 minutter på hver side.","Finsnitt kålen og bland den med limesaft og en klype salt.","Skjær avokadoen i skiver og varm lefsene.","Fyll lefsene med halloumi, kål, avokado og salsa."],
+ "Proteinbowl med egg, cottage cheese og quinoa":["Kok quinoaen etter anvisningen på pakken.","Kok eggene i 8 minutter, avkjøl dem i kaldt vann og del dem i to.","Del cherrytomatene i to og skjær avokadoen i skiver.","Fordel quinoa og spinat i skåler, topp med egg, cottage cheese, tomater og avokado, og drypp over olivenolje, salt og pepper."],
+ "Tofu tikka med ris":[RIS,"Skjær tofuen i terninger og stek dem gylne i olje, i 5–6 minutter. Ta dem ut av pannen.","Finhakk løk og hvitløk, og stek det mykt sammen med karri eller garam masala. Tilsett hermetiske tomater og kokosmelk, og la sausen småkoke i 10 minutter.","Ha tofuen tilbake i sausen, smak til med salt og server med ris."],
+ "Blomkåltaco med bønner og avokado":["Sett ovnen på 220 °C. Del blomkålen i små buketter, vend dem i olje, tacokrydder og salt, og stek dem i 20 minutter.","Skyll bønnene og varm dem i en kjele. Finsnitt kålen og bland den med limesaft og en klype salt.","Mos avokadoen. Varm lefsene etter anvisningen på pakken.","Fyll lefsene med blomkål, bønner, kål, avokado og salsa."],
+ "Pasta med kikerter, tomat og spinat":[PASTA,"Finhakk hvitløken og stek den i olje i 1 minutt. Tilsett hermetiske tomater, skylte kikerter og oregano, og la sausen småkoke i 8–10 minutter.","Vend inn spinat og pasta.","Smak til med salt og pepper."],
+ "Stekt ris med tofu og edamame":[RIS,"Skjær tofuen i små terninger og stek dem gylne i olje, i 5–6 minutter.","Ha i wokgrønnsakene og edamamebønnene, og stek i 3–4 minutter.","Vend inn risen og smak til med soyasaus."],
+ "Bønnegryte med poteter og paprika":["Skjær potetene i terninger og paprikaen i biter. Finhakk løk og hvitløk.","Stek løk, hvitløk og paprika mykt i olje sammen med paprikapulver.","Ha i poteter, hermetiske tomater, buljong og 1 dl vann per person. La gryten småkoke under lokk i 15–20 minutter, til potetene er møre.","Ha i skylte kidneybønner, varm gjennom og smak til med salt og pepper."],
+ "Quinoasalat med svarte bønner, mais og avokado":["Kok quinoaen etter anvisningen på pakken, og la den avkjøle litt.","Skyll bønnene og hell vannet av maisen. Skjær paprika og avokado i biter.","Bland quinoa, bønner, mais, paprika og spinat.","Vend inn avokado, og smak til med limesaft, olivenolje, salt og pepper."],
+ "Nudelsuppe med tofu og grønnsaker":["Skjær tofuen i terninger, gulroten i tynne skiver og purren i ringer.","Kok opp 4 dl vann per person med buljong. Ha i gulrot og purre, og la det småkoke i 5 minutter.","Ha i risnudlene og tofuen, og kok i 3–4 minutter, til nudlene er myke.","Vend inn spinat, og smak til med soyasaus og limesaft."],
+ "Ovnsbakte grønnsaker med kikerter og hummus":["Sett ovnen på 220 °C. Skjær søtpotet, squash og rødløk i biter, vend dem i olje, paprikapulver og salt, og stek dem i 20 minutter.","Skyll kikertene, ha dem på brettet og stek videre i 10 minutter.","Fordel spinat på tallerkener og topp med grønnsaker og kikerter.","Server med en skje hummus."],
+ "Minestrone med bønner og pasta":["Finhakk løk og hvitløk, og skjær gulrot og squash i små terninger.","Stek grønnsakene i olje i 5 minutter.","Tilsett hermetiske tomater, oregano, buljong og 3 dl vann per person, og la suppen småkoke i 10 minutter.","Ha i pastaen og skylte kidneybønner, og kok i 8–10 minutter, til pastaen er mør. Smak til med salt og pepper."]
+};
+function qty(total,unit){
+  if(unit==="g") return amt(total,unit)+" g";
+  var q=amt(total,unit),w=Math.floor(q),f={0:"",0.25:"¼",0.5:"½",0.75:"¾"}[q-w];
+  var txt=(w?w:"")+f;
+  if(!txt) txt="¼";
+  return txt+" "+(unit==="boks"&&q>1?"bokser":unit);
+}
+function recipe(idx,persons,goal){
+  var r=DINNERS[idx];
+  return {name:r.n,min:r.t,steps:STEPS[r.n],
+    rows:r.ing.map(function(x){return {id:x[0],name:ING[x[0]][0],q:qty(scaleQ(x[0],x[1],goal)*persons,ING[x[0]][2])};}),
+    pantry:r.pan.map(function(id){return ING[id][0];}).concat(["Salt","Pepper"])};
+}
+
+// Nutrition: [grams per unit, kcal, protein, carbs, fat per 100 g]. Typical values, used for estimates.
+var NUT = {
+  lok:[110,36,1.2,7,.2], rodlok:[110,36,1.2,7,.2], hvitlok:[40,130,6,25,.5], gulrot:[80,36,.7,7,.2], paprika:[160,30,1,5,.3],
+  tomat:[100,19,.9,3,.2], cherry:[1,20,.9,3,.3], agurk:[350,12,.7,1.6,.1], salat:[120,15,1.2,1.5,.2], spinat:[1,20,2.6,.8,.4],
+  brokkoli:[300,32,3.3,3,.4], sotpotet:[250,86,1.6,18,.1], potet:[1,76,1.9,16,.1], avokado:[140,170,2,2,16], sopp:[1,22,2.8,1,.3],
+  kal:[1,28,1.3,4.5,.2], blomkal:[500,25,2,3,.3], squash:[250,17,1.2,2.2,.3], kyllingdeig:[1,115,19,0,4], roktlaks:[1,180,22,0,10], purre:[150,30,1.6,4,.3], lime:[30,25,.4,7,.1], sitron:[40,25,.4,6,.1], banan:[110,90,1.1,20,.3], eple:[150,52,.3,11.5,.2],
+  kylling:[1,110,23,0,1.5], karbonade:[1,120,20,0,5], kjottdeig:[1,195,18,0,14], biff:[1,120,22,0,3.5], kalkun:[100,105,20,1.5,2],
+  laks:[1,210,20,0,14], torsk:[1,80,18,0,.7], reker:[1,90,19,.5,1], fiskekaker:[1,120,10,7,6], plantebiff:[100,200,16,6,12],
+  melk:[100,41,3.5,4.6,1], skyr:[160,65,10.5,4.5,.2], cottage:[250,80,13,2,2], gulost:[1,350,27,0,27], feta:[1,265,15,1,22],
+  parmesan:[1,400,35,0,29], mozzarella:[125,250,18,1.5,19], halloumi:[1,320,22,2,25], kesam:[300,60,11,3.5,1], flote:[100,185,2.8,4,18],
+  yoghurt:[500,63,3.8,5.5,3.4], egg:[55,143,12.5,.4,10], tofu:[300,125,13,1.5,7.5], hummus:[200,250,7,10,19], havredrikk:[100,45,1,6.5,1.5],
+  brod:[35,250,10,40,3.5], tortilla:[40,290,9,46,6.5], burgerbrod:[60,265,10,44,4.5], pita:[65,250,9.5,45,2], knekke:[13,350,11,60,3],
+  pizzabunn:[260,250,8.5,45,3.5], riskaker:[9,385,8,80,3],
+  havregryn:[1,370,13,58,7], pasta:[1,345,13,62,2.5], ris:[1,355,7.5,74,2.7], risnudler:[1,355,6,80,.6], linser:[1,340,24,50,1.5],
+  quinoa:[1,365,14,60,6], kikerter:[240,125,7,15,2.5], svartebonner:[240,110,7.5,13,.6], kidney:[240,105,7.5,13,.6],
+  hermtomat:[400,22,1.1,3.5,.2], mais:[285,80,2.7,13,1.5], kokosmelk:[400,75,.8,2,7], tunfisk:[130,110,25,0,1], makrell:[170,195,11,3,15],
+  peanottsmor:[1,610,25,12,50], notter:[1,620,19,10,54], granola:[1,440,10,60,16], salsa:[230,35,1.3,6.5,.3], pesto:[190,430,5,5,43],
+  baer:[1,45,.9,8,.4], erter:[1,75,5.5,9.5,.7], wokmix:[1,35,2,5,.4], edamame:[1,120,11.5,6,5.5]
+};
+// Per portion. Recipes that use oil count one teaspoon (5 g) per portion.
+function nutrition(idx,goal){
+  var r=DINNERS[idx],t=[0,0,0,0];
+  r.ing.forEach(function(x){
+    var n=NUT[x[0]]; if(!n) throw new Error("Mangler næringsdata: "+x[0]);
+    var g=scaleQ(x[0],x[1],goal)*n[0]/100;
+    for(var k=0;k<4;k++) t[k]+=g*n[k+1];
+  });
+  if(r.pan.indexOf("olje")>=0){ t[0]+=44; t[3]+=5; }
+  return {kcal:Math.round(t[0]/10)*10,p:Math.round(t[1]),k:Math.round(t[2]),f:Math.round(t[3])};
+}
+
+function poolSize(prof){ return DINNERS.filter(function(r){return ok(r,prof);}).length; }
+// Dates are local "yyyy-mm-dd" strings.
+var DAYNAMES=["Søn","Man","Tir","Ons","Tor","Fre","Lør"], MONTHS=["jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
+function toDate(iso){ var a=iso.split("-"); return new Date(+a[0],+a[1]-1,+a[2]); }
+function toIso(d){ return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+function addDays(iso,n){ var d=toDate(iso); d.setDate(d.getDate()+n); return toIso(d); }
+function mondayOf(iso){ return addDays(iso,-((toDate(iso).getDay()+6)%7)); }
+function dayLabel(iso){ var d=toDate(iso); return {day:DAYNAMES[d.getDay()],date:d.getDate()+". "+MONTHS[d.getMonth()]}; }
+function daysBetween(a,b){ return Math.round((toDate(b)-toDate(a))/864e5); }
+function weeksBetween(a,b){ return Math.round((toDate(b)-toDate(a))/6048e5); }
+// Streak: one point per calendar week in which a week plan is made. A skipped week resets it.
+function bumpStreak(st,today){
+  st=st||{count:0,best:0,last:""};
+  var wk=mondayOf(today);
+  if(st.last===wk) return st;
+  var gap=st.last?weeksBetween(st.last,wk):99;
+  var count=gap===1?st.count+1:1;
+  return {count:count,best:Math.max(st.best||0,count),last:wk};
+}
+function liveStreak(st,today){
+  if(!st||!st.last) return {count:0,best:0,thisWeek:false,broken:false};
+  var gap=weeksBetween(st.last,mondayOf(today));
+  return {count:gap<=1?st.count:0,best:st.best||st.count,thisWeek:gap===0,broken:gap>1};
+}
+/*LOGIC-END*/
+
+var KEY="ukekurv-v1";
+var S={step:0,name:"",persons:2,stores:[],diet:"alt",goal:"vanlig",allergens:[],styles:[],likes:[],plan:null,checked:{},seen:[],streak:null,marks:{},dinnersPerWeek:7,extra:[],xid:0,fridge:[],fid:0,always:[]};
+function today(){ return toIso(new Date()); }
+// Preview: #uke-ferdig shows the page as it looks the day after the week ends. Nothing is saved there.
+function isDemo(){ return location.hash==="#uke-ferdig" && !!S.plan; }
+function viewDay(){ return isDemo() ? addDays(S.plan.start,7) : today(); }
+function load(extra){
+  try{ var raw=localStorage.getItem(KEY); if(raw) Object.assign(S,JSON.parse(raw)); }catch(e){}
+  if(extra && typeof extra.step==="number") Object.assign(S,extra);
+  if(S.step===4 && !S.plan) S.step=0;
+  if(S.plan && !S.plan.start) S.plan.start=today();
+  if(S.plan && !S.streak) S.streak=bumpStreak(null,today());
+}
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+var TICK='<span class="tick"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+function chip(group,val,label,sub,on){
+  return '<button type="button" class="chip" data-act="toggle" data-group="'+group+'" data-val="'+esc(val)+'" aria-pressed="'+(on?"true":"false")+'">'+TICK+'<span class="t"><b>'+esc(label)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span></button>';
+}
+function dock(nextLabel,disabled,back){
+  return '<div class="dock"><div class="in">'+(back?'<button type="button" class="btn ghost" data-act="back">Tilbake</button>':'')+'<button type="button" class="btn" id="next" data-act="next"'+(disabled?' disabled':'')+'>'+nextLabel+'</button></div></div>';
+}
+function personsLabel(n){ return n+(n===1?" person":" personer"); }
+
+var VIEWS=[
+function(){ return ''+
+  '<section class="hero"><h1>Én handleliste for hele uken.</h1><p class="lead">Fortell hva du spiser og hvor du handler. Du får en ukemeny og en ferdig liste på under ett minutt.</p></section>'+
+  '<section class="stack"><h2>Lag bruker</h2>'+
+  '<label class="f" for="name">Hva heter du?<input type="text" id="name" autocomplete="given-name" maxlength="40" placeholder="Fornavn" value="'+esc(S.name)+'"></label>'+
+  '<div class="group"><span class="f" style="font-weight:600;font-size:14px" id="plabel">Hvor mange handler du for?</span>'+
+  '<div class="stepper" role="group" aria-labelledby="plabel"><button type="button" id="pminus" data-act="persons" data-d="-1" aria-label="Færre personer"'+(S.persons<=1?' disabled':'')+'>−</button><output id="pout">'+personsLabel(S.persons)+'</output><button type="button" id="pplus" data-act="persons" data-d="1" aria-label="Flere personer"'+(S.persons>=6?' disabled':'')+'>+</button></div></div>'+
+  '<p class="fine">Dette er en prototype. Profilen lagres bare i denne nettleseren.</p></section>'+
+  dock(S.plan?"Videre":"Lag bruker og gå videre",!S.name.trim(),false);
+},
+function(){ return ''+
+  '<div class="head"><h1>Hvor handler du?</h1><p class="lead">Velg butikkene du pleier å bruke.</p></div>'+
+  '<div class="chips">'+STORES.map(function(s){return chip("stores",s,s,"",S.stores.indexOf(s)>=0);}).join("")+'</div>'+
+  dock("Videre",!S.stores.length,true);
+},
+function(){ return ''+
+  '<div class="head"><h1>Hva spiser du?</h1><p class="lead">Vi holder oss unna alt du ikke tåler eller ikke vil ha.</p></div>'+
+  '<div class="group"><h3>Kosthold</h3><div class="chips">'+DIETS.map(function(d){return chip("diet",d[0],d[1],d[2],S.diet===d[0]);}).join("")+'</div></div>'+
+  '<div class="group"><h3 id="dlabel">Middager i uken</h3><p class="explain">Få spiser hjemmelaget middag alle sju dagene. Velg hvor mange middager du vil handle til, så blir resten fri til restemat, middag ute eller noe enkelt.</p>'+
+  '<div class="stepper" role="group" aria-labelledby="dlabel"><button type="button" id="dminus" data-act="dinners" data-d="-1" aria-label="Færre middager"'+((S.dinnersPerWeek||7)<=3?' disabled':'')+'>−</button><output id="dout">'+(S.dinnersPerWeek||7)+' middager</output><button type="button" id="dplus" data-act="dinners" data-d="1" aria-label="Flere middager"'+((S.dinnersPerWeek||7)>=7?' disabled':'')+'>+</button></div></div>'+
+  '<div class="group"><h3>Mål for maten</h3><div class="chips one">'+GOALS.map(function(g){return chip("goal",g[0],g[1],g[2],S.goal===g[0]);}).join("")+'</div></div>'+
+  '<div class="group"><h3>Allergier og intoleranser</h3><div class="chips">'+ALLERGENS.map(function(a){return chip("allergens",a[0],a[1],"",S.allergens.indexOf(a[0])>=0);}).join("")+'</div></div>'+
+  '<div class="group"><h3>Stil på maten</h3><div class="chips one">'+STYLES.map(function(s){return chip("styles",s[0],s[1],s[2],S.styles.indexOf(s[0])>=0);}).join("")+'</div></div>'+
+  dock("Videre",false,true);
+},
+function(){ return ''+
+  '<div class="head"><h1>Hva liker du best?</h1><p class="lead">Velg så mange du vil. Vi lar favorittene dine styre ukemenyen.</p></div>'+
+  '<div class="chips">'+LIKES.map(function(l){return chip("likes",l[0],l[1],"",S.likes.indexOf(l[0])>=0);}).join("")+'</div>'+
+  dock("Lag ukeshandelen min",false,true);
+},
+function(){
+  var g=buyList(),all=0,done=0;
+  g.groups.forEach(function(c){c.rows.forEach(function(r){all++; if(S.checked[r.id]) done++;});});
+  g.pantry.forEach(function(r){all++; if(S.checked[r.id]) done++;});
+  (S.extra||[]).forEach(function(x){all++; if(S.checked[x.id]) done++;});
+  var dn=DIETS.filter(function(d){return d[0]===S.diet;})[0][1];
+  var vd=viewDay(),dayIdx=daysBetween(S.plan.start,vd),weekOver=dayIdx>=7;
+  allocCache=allocFor(S.plan);
+  var nFree=(S.plan.free||[]).length,nDin=7-nFree,ex=S.extra||[];
+  var pool=poolSize(profile()),ls=liveStreak(S.streak,vd);
+  var first=dayLabel(S.plan.start),last=dayLabel(addDays(S.plan.start,6));
+  var stTxt=ls.broken?"Streaken ble brutt. Lag en ny ukesmeny for å starte på nytt.":(weekOver?"Uken din er ferdig. Lag en ny ukesmeny for å holde streaken i gang.":"Uken er registrert. Når menyen er ferdig, lager du en ny for å holde streaken i gang.");
+  var fbNow=(S.feedback||[]).filter(function(f){return f.week===S.plan.start;})[0];
+  var FB=[["bra","Bra"],["greit","Greit"],["ikke","Ikke helt"]];
+  var doneHtml=weekOver?'<div class="done" aria-labelledby="donetitle"><h2 id="donetitle">Uken er ferdig. Godt jobbet!</h2>'+
+    '<p>Menyen gikk fra '+first.date+' til '+last.date+'. Lag en ny ukesmeny for å holde streaken og de gode vanene i gang.</p>'+
+    '<div class="group"><h3>Hvordan gikk uken?</h3><div class="fb">'+FB.map(function(f){return '<button type="button" data-act="feedback" data-val="'+f[0]+'" aria-pressed="'+(fbNow&&fbNow.val===f[0]?"true":"false")+'">'+f[1]+'</button>';}).join("")+'</div>'+
+    (fbNow?'<p class="fine">Takk! Svaret er lagret.</p>':'')+'</div>'+
+    '<button type="button" class="btn" data-act="nextweek">Lag ny ukesmeny</button></div>':'';
+  var demoHtml=isDemo()?'<div class="note demo"><span>Forhåndsvisning: slik ser Ukekurv ut dagen etter at uken er over. Ingenting du trykker på her blir lagret.</span><button type="button" class="btn sm ghost" data-act="exitdemo">Avslutt forhåndsvisning</button></div>':'';
+  var streakHtml='<div class="streak"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M15 3c1 5 7 7 7 14a7 7 0 0 1-14 0c0-3 1.5-5 3-6 .3 2 1 3 2 3.500C13 11 13 7 15 3z" fill="#F0B35A" stroke="#6B5521" stroke-width="1.5" stroke-linejoin="round"/></svg><b>'+ls.count+'</b><div class="st"><strong>'+(ls.count===1?"uke på rad":"uker på rad")+(ls.best>ls.count?" · rekord "+ls.best:"")+'</strong><span>'+stTxt+'</span></div></div>';
+  var mealGroup=function(title,key,list,arr,off){
+    return '<div class="group"><div class="mealhead"><h3>'+title+'</h3><button type="button" class="mini'+(off?' on':'')+'" data-act="togglemeal" data-meal="'+key+'" aria-label="'+(off?'Legg '+title.toLowerCase()+' til i handlelisten':'Fjern '+title.toLowerCase()+' fra handlelisten')+'">'+(off?'Legg til':'Fjern')+'</button></div>'+
+      '<div class="meals">'+(off?'<div><span>Ikke med i handlelisten.</span></div>':meal(list,arr))+'</div></div>';
+  };
+  var meal=function(list,arr){ return arr.map(function(m){return '<div><b>'+esc(list[m.idx].n)+'</b> <span>'+m.days+' dager</span></div>';}).join("") || '<div><span>Fant ingen forslag som passer valgene dine.</span></div>'; };
+  var snack=S.plan.snacks.map(function(s){return ING[s[0]][0].toLowerCase();}).join(", ");
+  return ''+
+  demoHtml+
+  '<div class="head"><h1>'+esc(S.name)+(weekOver?', klar for en ny uke?':', her er uken din.')+'</h1>'+
+  '<div class="tags"><span class="tag">'+personsLabel(S.persons)+'</span><span class="tag">'+esc(dn)+'</span>'+(S.goal!=="vanlig"?'<span class="tag">'+GOALS.filter(function(x){return x[0]===S.goal;})[0][1]+'</span>':'')+''+S.stores.map(function(s){return '<span class="tag">'+esc(s)+'</span>';}).join("")+'</div>'+
+  ''+streakHtml+'<div class="actions"><button type="button" class="btn sm" data-act="settings">Innstillinger</button><button type="button" class="btn sm ghost" data-act="fridge">Mitt kjøleskap'+(fridgeCount()?' ('+fridgeCount()+')':'')+'</button></div></div>'+
+  '<div class="cols">'+
+  '<section class="card"><div class="rowhead"><h2>Ukemeny</h2><span class="fine">'+first.date+' til '+last.date+'</span></div>'+
+  doneHtml+
+  '<p class="fine">'+nDin+(nDin===1?' middag':' middager')+(nFree?' og '+nFree+(nFree===1?' fri dag':' fri dager'):'')+'. '+pool+' middager passer valgene dine.</p>'+
+  '<ul class="days">'+S.plan.dinners.map(function(i,k){if(isFree(S.plan,k)) return freeRow(k,dayIdx);var r=DINNERS[i],n=nutrition(i,S.goal),dl=dayLabel(addDays(S.plan.start,k));return '<li'+(k===dayIdx?' class="today"':'')+'><span class="d">'+(k===dayIdx?'I dag':dl.day)+'<small>'+dl.date+'</small></span><div class="body"><div><button type="button" class="dish" data-act="recipe" data-day="'+k+'" aria-label="Se oppskrift: '+esc(r.n)+'">'+esc(r.n)+'</button><br><span class="m">'+r.t+' min · trykk for oppskrift</span>'+fromFridgeTag(i)+'</div><div class="acts"><button type="button" class="swap'+(swapLocked(i)?' locked':'')+'" data-act="swap" data-day="'+k+'" aria-disabled="'+(swapLocked(i)?'true':'false')+'" aria-label="Bytt middag '+dl.day+' '+dl.date+'">Bytt</button><button type="button" class="swap" data-act="rmday" data-day="'+k+'" aria-label="Fjern middag '+dl.day+' '+dl.date+'">Fjern</button></div></div><div class="nut"><b>'+n.kcal+' kcal</b><span>Protein '+n.p+' g</span><span>Karbo '+n.k+' g</span><span>Fett '+n.f+' g</span></div></li>';}).join("")+'</ul>'+
+  '<p class="fine">Næringsinnhold per porsjon. Tallene er omtrentlige og regnet ut fra typiske verdier for råvarene.</p>'+
+  (S.plan.unique<Math.min(7,nDin)?'<p class="note">Bare '+S.plan.unique+' middager passer alle valgene dine, så noen går igjen i løpet av uken.</p>':'')+
+  mealGroup("Frokost","bf",BREAKFASTS,S.plan.bf,S.plan.noBf)+
+  mealGroup("Lunsj","lu",LUNCHES,S.plan.lu,S.plan.noLu)+
+  '<div class="group"><h3>Mellommåltid</h3><div class="meals"><div><span>Frukt og litt ekstra: '+esc(snack)+'</span></div></div></div>'+
+  '</section>'+
+  '<section class="card"><div class="rowhead"><h2>Handleliste</h2><button type="button" class="btn sm ghost" data-act="copy">Kopier liste</button></div>'+
+  '<div class="group"><span class="fine" id="count">'+done+' av '+all+' varer i kurven</span><div class="prog"><i id="progbar" style="width:'+(all?Math.round(done/all*100):0)+'%"></i></div></div>'+
+  g.groups.map(function(c){ return '<div class="group"><h3>'+c.label+'</h3><ul class="list">'+c.rows.map(function(r){
+    var mk=(S.marks||{})[r.id];
+    return '<li'+(mk?' class="isnew"':'')+'><label for="it-'+r.id+'"><input type="checkbox" id="it-'+r.id+'" data-id="'+r.id+'"'+(S.checked[r.id]?' checked':'')+'><span>'+esc(r.name)+markPill(mk)+'</span><span class="q">'+r.main+(r.sub?'<small>'+r.sub+'</small>':'')+'</span></label></li>';
+  }).join("")+'</ul></div>'; }).join("")+
+  '<div class="group"><h3>Egne varer</h3><p class="explain">Dopapir, kaffe eller annet du trenger, så har du alt på én liste.</p>'+
+  (ex.length?'<ul class="list">'+ex.map(function(x){
+    return '<li><label for="it-'+x.id+'"><input type="checkbox" id="it-'+x.id+'" data-id="'+x.id+'"'+(S.checked[x.id]?' checked':'')+'><span>'+esc(x.name)+'</span><span class="q"><button type="button" class="rm" data-act="rmextra" data-x="'+x.id+'" aria-label="Fjern '+esc(x.name)+'">×</button></span></label></li>';
+  }).join("")+'</ul>':'')+
+  '<div class="addrow"><label class="sr" for="extra">Legg til en vare</label><input type="text" id="extra" maxlength="60" placeholder="Legg til en vare" autocomplete="off" enterkeyhint="done"><button type="button" class="btn sm" data-act="addextra">Legg til</button></div></div>'+
+  (g.fromHave.length?'<div class="group"><h3>Fra Mitt kjøleskap</h3><p class="explain">Dette har du hjemme, så du trenger ikke kjøpe det.</p><ul class="ingr">'+g.fromHave.map(function(r){return '<li><span>'+esc(r.name)+'</span><b>'+r.main+'</b></li>';}).join("")+'</ul></div>':'')+
+  (g.pantry.length?'<div class="group"><h3>Sjekk at du har hjemme</h3><p class="fine">Oppskriftene bruker dette. Kjøp det du mangler. Trykk «Har alltid» på basisvarer du alltid har.</p><ul class="list">'+g.pantry.map(function(r){
+    var mk=(S.marks||{})[r.id];
+    return '<li'+(mk?' class="isnew"':'')+'><label for="it-'+r.id+'"><input type="checkbox" id="it-'+r.id+'" data-id="'+r.id+'"'+(S.checked[r.id]?' checked':'')+'><span>'+esc(r.name)+markPill(mk)+'</span><span class="q"><button type="button" class="mini" data-act="always" data-id="'+r.id+'" aria-label="'+esc(r.name)+' har jeg alltid">Har alltid</button></span></label></li>';
+  }).join("")+'</ul></div>':'')+
+  '<p class="note">Sjekk alltid allergenmerkingen på pakken. Listen bygger på typiske ingredienser, og innholdet varierer mellom merker og butikker.</p>'+
+  '</section></div>';
+}];
+
+var view=document.getElementById("view"),app=document.getElementById("app");
+function render(){
+  view.innerHTML=VIEWS[S.step]();
+  view.style.animation="none"; void view.offsetWidth; view.style.animation="";
+  app.classList.toggle("wide",S.step===4);
+  var sn=document.getElementById("stepno");
+  if(S.step<4) sn.textContent="Steg "+(S.step+1)+" av 4";
+  else sn.innerHTML=isDemo()?"":'<button type="button" class="help" data-act="tour" aria-label="Vis omvisning">?</button>';
+  if(tourStep>=0){ var tt=TOUR[tourStep].sel(); if(tt) tt.classList.add("tour-target"); }
+  if(S.step===4 && !S.tourDone && !isDemo() && tourStep<0 && !tourQueued){ tourQueued=true; setTimeout(function(){ tourQueued=false; if(S.step===4 && !S.tourDone && !isDemo() && tourStep<0 && !sheet.classList.contains("open")) startTour(); },700); }
+  var bars=document.querySelectorAll("#bar i");
+  for(var k=0;k<bars.length;k++) bars[k].classList.toggle("on",k<=S.step);
+  document.getElementById("bar").style.display=S.step<4?"":"none";
+  save();
+}
+// ---- First-time tour of the week page ----
+var TOUR=[
+ {sel:function(){ return view.querySelector(".days li:not(.free)"); },t:"Middagene",x:"Trykk på navnet for å se oppskriften. Med Bytt og Fjern tilpasser du uken."},
+ {sel:function(){ var c=view.querySelectorAll(".cols > .card"); return c[1]; },t:"Handlelisten",x:"Kryss av mens du handler. Du kan også legge til egne varer, som dopapir.",block:"start"},
+ {sel:function(){ return view.querySelector('[data-act="fridge"]'); },t:"Mitt kjøleskap",x:"Fjerner du en middag etter at du har handlet, havner varene her. Neste uke prøver appen å bruke dem i menyen, så du slipper å kjøpe dobbelt."},
+ {sel:function(){ return view.querySelector(".streak"); },t:"Streak",x:"Lag en ny meny hver uke for å holde streaken i gang."}
+];
+var tourStep=-1,tourQueued=false,tourEl=document.getElementById("tour");
+function clearTourTarget(){ var o=view.querySelectorAll(".tour-target"); for(var i=0;i<o.length;i++) o[i].classList.remove("tour-target"); }
+function startTour(){ hideNotice(); closeRecipe(); tourStep=0; showTourStep(); }
+function showTourStep(){
+  clearTourTarget();
+  var st=TOUR[tourStep],el=st.sel(),last=tourStep===TOUR.length-1;
+  if(el){
+    el.classList.add("tour-target");
+    var reduce=window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if(st.block==="start"){ var top=el.getBoundingClientRect().top+window.scrollY-16; window.scrollTo({top:top,behavior:reduce?"auto":"smooth"}); }
+    else el.scrollIntoView({block:"center",behavior:reduce?"auto":"smooth"});
+  }
+  tourEl.innerHTML='<span class="stp">Kom i gang · '+(tourStep+1)+' av '+TOUR.length+'</span><h2 id="tourtitle">'+st.t+'</h2><p>'+st.x+'</p>'+
+    '<div class="row"><button type="button" class="btn sm ghost" data-act="tourskip">'+(last?'Lukk':'Hopp over')+'</button>'+
+    '<div class="dots" aria-hidden="true">'+TOUR.map(function(_,i){return '<i'+(i===tourStep?' class="on"':'')+'></i>';}).join("")+'</div>'+
+    '<button type="button" class="btn sm" id="tournext" data-act="tournext">'+(last?'Ferdig':'Neste')+'</button></div>';
+  tourEl.classList.add("show");
+  var nb=document.getElementById("tournext"); if(nb) nb.focus({preventScroll:true});
+}
+function endTour(){
+  if(tourStep<0) return;
+  clearTourTarget(); tourEl.classList.remove("show"); tourEl.innerHTML=""; tourStep=-1;
+  S.tourDone=true; save();
+  window.scrollTo({top:0,behavior:"auto"});
+  var h=document.querySelector(".help"); if(h) h.focus({preventScroll:true});
+}
+function go(step){ hideNotice(); if(tourStep>=0) endTour(); editingDay=-1; S.step=step; render(); window.scrollTo(0,0); }
+// ---- Mitt kjøleskap ----
+// S.fridge entries: {id (ingredient id, or "f.." for free text), name, q, week, added}.
+// week = start date of the plan whose leftovers made it. Those are not used for the same plan,
+// because that plan's shopping list already paid for them.
+// Each week plan gets its own id, so two weeks made on the same day are still told apart.
+function planKey(plan){ return plan ? (plan.pid||plan.start) : ""; }
+// How fresh an item is: "ok", "sjekk" (check it) or "gammel" (not counted until you confirm it is still good).
+var AGE={snart:[3,7],stund:[10,21],lenge:[9999,9999]};
+function ageState(e,onDay){
+  if(!ING[e.id]) return "ok";
+  var lim=AGE[shelf(e.id)]||AGE.lenge,d=daysBetween(e.okDate||e.added,onDay||today());
+  return d>=lim[1]?"gammel":(d>=lim[0]?"sjekk":"ok");
+}
+function fridgeAvail(plan){
+  var a={};
+  // For a menu that already exists, freshness is judged on the day it was made: the week you planned
+  // never changes under you, and what it used is taken out when the week ends however old it is by then.
+  var onDay=plan&&plan.start?plan.start:today();
+  (S.fridge||[]).forEach(function(e){ if(ING[e.id] && e.q>0 && ageState(e,onDay)!=="gammel" && (!plan || e.week!==planKey(plan))) a[e.id]=(a[e.id]||0)+e.q; });
+  return a;
+}
+function allocFor(plan){
+  var need=totals(plan,S.persons,S.goal).items,av=fridgeAvail(plan),al={};
+  for(var id in av) if(need[id]) al[id]=Math.min(av[id],need[id]);
+  return al;
+}
+function buyList(){
+  var g=grouped(S.plan,S.persons,S.goal,allocFor(S.plan)),al=S.always||[];
+  g.pantry=g.pantry.filter(function(r){return al.indexOf(r.id)<0;});
+  return g;
+}
+// Leftovers of things you count (apples, cans, packs) are rounded down: a quarter lemon rarely gets used.
+function roundLeft(id,q){
+  var u=ING[id]?ING[id][2]:"";
+  return (u==="g"||u==="dl")?q:Math.floor(q+1e-6);
+}
+function addToFridge(id,q,week){
+  if(!(q>0)) return;
+  S.fridge=S.fridge||[]; S.fid=(S.fid||0)+1;
+  S.fridge.push({e:"e"+S.fid,id:id,name:ING[id]?ING[id][0]:id,q:Math.round(q*1000)/1000,week:week,added:today()});
+}
+// Take what a finished week used out of the fridge, oldest first.
+function consumeWeek(plan){
+  var al=allocFor(plan);
+  Object.keys(al).forEach(function(id){
+    var left=al[id];
+    (S.fridge||[]).filter(function(e){return e.id===id && e.week!==planKey(plan);})
+      .sort(function(a,b){return a.added<b.added?-1:a.added>b.added?1:0;})
+      .forEach(function(e){ var t=Math.min(e.q,left); e.q-=t; left-=t; });
+  });
+  (S.fridge||[]).forEach(function(e){ if(ING[e.id] && e.week!=="manual") e.q=roundLeft(e.id,e.q); });
+  S.fridge=(S.fridge||[]).filter(function(e){ return !ING[e.id] || e.q>1e-6; });
+}
+function fridgeCount(){ var seen={}; (S.fridge||[]).forEach(function(e){ seen[e.id]=1; }); return Object.keys(seen).length; }
+function profile(){ return {diet:S.diet,goal:S.goal,allergens:S.allergens,styles:S.styles,likes:S.likes}; }
+function generate(){
+  if(S.plan && S.plan.start && daysBetween(S.plan.start,today())>=7) consumeWeek(S.plan);
+  var seen=(S.seen||[]).slice();
+  if(S.plan) S.plan.dinners.forEach(function(i,k){ if(isFree(S.plan,k)) return; var at=seen.indexOf(i); if(at>=0) seen.splice(at,1); seen.push(i); });
+  var pr=profile(),av0=fridgeAvail(null); pr.have=Object.keys(av0);
+  pr.haveSoon=pr.have.filter(function(id){ return shelf(id)==="snart"; });
+  S.plan=makePlan(pr,null,seen,S.plan);
+  S.plan.start=today();
+  S.plan.diet=S.diet;
+  S.plan.pid="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  S.plan.free=freeDays(S.dinnersPerWeek||7);
+  S.plan.noBf=!!S.noBf; S.plan.noLu=!!S.noLu;
+  S.streak=bumpStreak(S.streak,today());
+  S.seen=S.plan.fresh<7?[]:seen;
+  // Own items carry over to the new week unless they were already bought.
+  S.extra=(S.extra||[]).filter(function(x){ return !S.checked[x.id]; });
+  S.checked={}; S.marks={};
+}
+var toastT;
+function toast(msg){ var t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(function(){t.classList.remove("show");},2200); }
+function listText(){
+  var g=buyList(),out=["Handleliste for uken ("+personsLabel(S.persons)+")",""];
+  g.groups.forEach(function(c){ out.push(c.label); c.rows.forEach(function(r){ out.push("- "+r.name+": "+r.main+(r.sub?" ("+r.sub+")":"")); }); out.push(""); });
+  if((S.extra||[]).length){ out.push("Egne varer"); S.extra.forEach(function(x){ out.push("- "+x.name); }); out.push(""); }
+  if(g.pantry.length) out.push("Sjekk at du har hjemme: "+g.pantry.map(function(r){return r.name;}).join(", "));
+  return out.join("\n");
+}
+
+var BASKET='<svg viewBox="0 0 200 180" aria-hidden="true">'+
+  '<path d="M68 104C68 58 132 58 132 104" fill="none" stroke="#26784C" stroke-width="5" stroke-linecap="round"/>'+
+  '<path d="M40 102H160L149 162H51Z" fill="#C9E9D3"/>'+
+  '<g class="drop"><circle cx="78" cy="52" r="13" fill="#F3B0A6"/><path d="M78 39c1-5 4-7 8-7" fill="none" stroke="#26784C" stroke-width="2.5" stroke-linecap="round"/></g>'+
+  '<g class="drop d2"><path d="M118 36l12 6-18 28z" fill="#F5C48A"/><path d="M123 38l2-8M127 40l6-5" fill="none" stroke="#26784C" stroke-width="2.5" stroke-linecap="round"/></g>'+
+  '<g class="drop d3"><path d="M90 44l6-8h10l6 8v24H90z" fill="#fff" stroke="#26784C" stroke-width="2.5" stroke-linejoin="round"/><path d="M90 44h22" stroke="#26784C" stroke-width="2.5"/></g>'+
+  '<g class="drop d4"><ellipse cx="112" cy="54" rx="16" ry="10" fill="#8FD3A8" transform="rotate(-25 112 54)"/><path d="M101 60l22-12" stroke="#26784C" stroke-width="2" stroke-linecap="round"/></g>'+
+  '<path d="M40 102H160L149 162H51Z" fill="#DFF3E5" stroke="#26784C" stroke-width="3" stroke-linejoin="round"/>'+
+  '<path d="M34 102H166" stroke="#26784C" stroke-width="6" stroke-linecap="round"/>'+
+  '<path d="M72 114l4 38M100 114v38M128 114l-4 38" stroke="#8FD3A8" stroke-width="3" stroke-linecap="round"/></svg>';
+function showLoading(){
+  var msgs=["Finner retter som passer deg","Setter sammen ukemenyen","Regner ut mengder for "+personsLabel(S.persons),"Fyller handlekurven"];
+  view.innerHTML='<section class="loading">'+BASKET+'<h1>Lager uken din</h1><p class="status" id="lstatus" role="status">'+msgs[0]+'</p><div class="prog"><i></i></div></section>';
+  document.getElementById("stepno").textContent="";
+  window.scrollTo(0,0);
+  var k=0,el=document.getElementById("lstatus");
+  var iv=setInterval(function(){ k++; if(k<msgs.length && el) el.textContent=msgs[k]; },720);
+  setTimeout(function(){ clearInterval(iv); go(4); },2900);
+}
+var editingDay=-1;
+function freeRow(k,dayIdx){
+  var dl=dayLabel(addDays(S.plan.start,k)),note=(S.plan.notes||{})[k];
+  var inner=editingDay===k?
+    '<div class="noteedit"><label class="sr" for="note-'+k+'">Hva spiste du '+dl.day+' '+dl.date+'?</label><input type="text" id="note-'+k+'" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="F.eks. burger fra McDonald’s" value="'+esc(note||"")+'"><div class="acts"><button type="button" class="swap rec" data-act="savenote" data-day="'+k+'">Lagre</button><button type="button" class="swap" data-act="cancelnote">Avbryt</button></div></div>':
+    '<button type="button" class="notebtn" data-act="editnote" data-day="'+k+'" aria-label="'+(note?'Endre hva du spiste '+dl.day+' '+dl.date:'Skriv hva du spiste '+dl.day+' '+dl.date)+'">'+
+      (note?'<span class="mine">'+esc(note)+'</span> <span class="link">Endre</span>':'<span class="m">Restemat, middag ute eller noe enkelt.</span><br><span class="link">Skriv hva du spiste</span>')+'</button>';
+  return '<li class="free'+(k===dayIdx?' today':'')+'"><span class="d">'+(k===dayIdx?'I dag':dl.day)+'<small>'+dl.date+'</small></span><div class="body"><div><span class="n">Fri dag</span>'+inner+'</div>'+(editingDay===k?'':'<div class="acts"><button type="button" class="swap" data-act="addday" data-day="'+k+'">Legg til middag</button></div>')+'</div><div></div></li>';
+}
+function saveNote(k){
+  var inp=document.getElementById("note-"+k); if(!inp) return;
+  var v=inp.value.trim().replace(/\s+/g," ");
+  S.plan.notes=S.plan.notes||{};
+  if(v) S.plan.notes[k]=v; else delete S.plan.notes[k];
+  editingDay=-1; var y=window.scrollY; render(); window.scrollTo(0,y);
+  var bt=view.querySelector('[data-act="editnote"][data-day="'+k+'"]'); if(bt) bt.focus({preventScroll:true});
+}
+// Changes the menu, then marks what changed on the shopping list and shows the notice.
+function changeMenu(day,mutate,label){
+  var before=listSnap(); mutate();
+  var after=listSnap(),d=diffSnap(before,after),boughtMore=[],toFridge=[],notFridge=[];
+  // Bought (ticked) more than the new menu needs: the rest goes to Mitt kjøleskap.
+  Object.keys(before).forEach(function(id){
+    if(!S.checked[id] || before[id].pantry || !ING[id]) return;
+    // Only what the change freed up: a removed item gives everything you bought of it,
+    // a smaller amount gives the difference. Leftovers from pack sizes are not counted (yet).
+    var bought=boughtQty(id,before[id].tot),still=after[id]?after[id].tot:0;
+    var left=still<=1e-9?bought:Math.min(bought-still,before[id].tot-still);
+    left=roundLeft(id,left);
+    if(left>(ING[id][2]==="g"?24:0.2)){
+      var g=ING[id],cant=g[4]>dietLevel(S.diet)||g[3].split(" ").some(function(a){return a&&S.allergens.indexOf(a)>=0;});
+      if(cant){ notFridge.push(g[0]); return; }
+      addToFridge(id,left,planKey(S.plan)); toFridge.push(ING[id][0]+" "+qty(left,ING[id][2]));
+    }
+  });
+  S.marks=S.marks||{};
+  d.rem.forEach(function(id){ delete S.checked[id]; delete S.marks[id]; });
+  d.add.forEach(function(id){ delete S.checked[id]; S.marks[id]="ny"; });
+  d.more.forEach(function(id){ if(S.checked[id]){ delete S.checked[id]; S.marks[id]="mer"; boughtMore.push(id); } });
+  var y=window.scrollY; render(); window.scrollTo(0,y);
+  showSwapNotice(day,before,after,d,boughtMore,label,toFridge,notFridge);
+}
+function addExtra(){
+  var inp=document.getElementById("extra"); if(!inp) return;
+  var name=inp.value.trim().replace(/\s+/g," ");
+  if(!name) { inp.focus(); return; }
+  S.extra=S.extra||[];
+  var dup=S.extra.filter(function(x){return x.name.toLowerCase()===name.toLowerCase();})[0];
+  if(dup){ toast(dup.name+" står allerede på listen"); inp.select(); return; }
+  S.xid=(S.xid||0)+1;
+  S.extra.push({id:"x"+S.xid,name:name});
+  var y=window.scrollY; render(); window.scrollTo(0,y);
+  var again=document.getElementById("extra"); if(again) again.focus({preventScroll:true});
+}
+// A dinner can't be swapped once you have ticked off something it uses: you've shopped for it.
+var FRIDGE_ICON='<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="1" width="7" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 5h7M4.5 2.8v1M4.5 6.6v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
+var allocCache=null;
+// Only shown when the dinner uses meat or fish from the fridge; at most two names.
+function fromFridgeTag(i){
+  var al=allocCache||{},ids=DINNERS[i].ing.map(function(x){return x[0];}).filter(function(id){return al[id]>0 && ING[id][1]==="kf" && ING[id][4]>=2;});
+  if(!ids.length) return "";
+  var names=ids.slice(0,2).map(function(id){return ING[id][0].split(",")[0].toLowerCase();}).join(", ")+(ids.length>2?" og "+(ids.length-2)+" til":"");
+  return '<br><span class="fromfr soon">'+FRIDGE_ICON+'Bruker fra kjøleskapet: '+esc(names)+'</span>';
+}
+function swapLocked(i){ return DINNERS[i].ing.some(function(x){ return !!S.checked[x[0]]; }); }
+function updateLocks(){
+  var bs=view.querySelectorAll('[data-act="swap"]');
+  for(var k=0;k<bs.length;k++){ var d=parseInt(bs[k].getAttribute("data-day"),10),lk=swapLocked(S.plan.dinners[d]); bs[k].classList.toggle("locked",lk); bs[k].setAttribute("aria-disabled",lk?"true":"false"); }
+}
+function markPill(mk){ return mk==="ny"?'<em class="pill">Ny</em>':(mk==="mer"?'<em class="pill mer">Kjøp mer</em>':''); }
+// What the shopping list holds right now, by ingredient id.
+function listSnap(){
+  var g=buyList(),m={};
+  g.groups.forEach(function(c){ c.rows.forEach(function(r){ m[r.id]={name:r.name,main:r.main,tot:r.tot}; }); });
+  g.pantry.forEach(function(r){ m[r.id]={name:r.name,main:"",tot:0,pantry:true}; });
+  return m;
+}
+function diffSnap(a,b){
+  var add=[],rem=[],more=[],id;
+  for(id in b){ if(!a[id]) add.push(id); else if(!b[id].pantry && b[id].tot>a[id].tot+1e-9 && b[id].main!==a[id].main) more.push(id); }
+  for(id in a){ if(!b[id]) rem.push(id); }
+  return {add:add,rem:rem,more:more};
+}
+var noticeEl=document.getElementById("notice");
+function hideNotice(){ noticeEl.classList.remove("show"); noticeEl.innerHTML=""; }
+function showSwapNotice(day,before,after,d,boughtMore,label,toFridge,notFridge){
+  toFridge=toFridge||[]; notFridge=notFridge||[];
+  var dl=dayLabel(addDays(S.plan.start,day)),n=d.add.length,r=d.rem.length;
+  var changed=Object.keys(after).filter(function(id){ return before[id] && !after[id].pantry && before[id].main!==after[id].main; }).length;
+  var head=(n||r)?n+(n===1?" ny vare":" nye varer")+" og "+r+" fjernet":(changed?"Mengdene i handlelisten er oppdatert":"Handlelisten er uendret");
+  var line=function(lbl,ids,snap,fn){ if(!ids.length) return ''; var shown=ids.slice(0,6).map(fn||function(id){var x=snap[id];return esc(x.name)+(x.main?" "+x.main:"");});
+    return '<span><b>'+lbl+':</b> '+shown.join(", ")+(ids.length>6?" og "+(ids.length-6)+" til":"")+'</span>'; };
+  noticeEl.innerHTML='<span class="h">'+head+'</span>'+
+    '<span class="meal">'+(label?esc(label):dl.day+' '+dl.date+': '+(isFree(S.plan,day)?'Fri dag, '+esc(DINNERS[S.plan.dinners[day]].n.charAt(0).toLowerCase()+DINNERS[S.plan.dinners[day]].n.slice(1))+' er fjernet':esc(DINNERS[S.plan.dinners[day]].n)))+'</span>'+
+    ((n||r||boughtMore.length||toFridge.length||notFridge.length)?'<div class="small">'+
+      line("Lagt til",d.add,after)+
+      line("Fjernet",d.rem,before)+
+      line("Kjøp mer av",boughtMore,after,function(id){return esc(after[id].name)+" ("+before[id].main+" → "+after[id].main+")";})+
+      (toFridge.length&&!S.tipFridge?'<span class="tip">Du har allerede kjøpt disse varene, men trenger dem ikke denne uken. De er lagt i Mitt kjøleskap, så neste uke slipper du å kjøpe dem.</span>':'')+
+      (notFridge.length?'<span><b>Passer ikke kostholdet ditt lenger, ikke lagt i kjøleskapet:</b> '+esc(notFridge.slice(0,6).join(", ")+(notFridge.length>6?" og "+(notFridge.length-6)+" til":""))+'</span>':'')+
+      (toFridge.length?'<span><b>Lagt i Mitt kjøleskap:</b> '+esc(toFridge.slice(0,6).join(", ")+(toFridge.length>6?" og "+(toFridge.length-6)+" til":""))+'</span>':'')+
+    '</div>':'')+
+    '<div class="row">'+((n||boughtMore.length)?'<button type="button" class="btn sm ghost" data-act="seenew">Se handlelisten</button>':'')+'<button type="button" class="btn sm" data-act="closenotice">OK</button></div>';
+  noticeEl.classList.add("show");
+  if(toFridge.length && !S.tipFridge){ S.tipFridge=true; save(); }
+}
+var sheet=document.getElementById("sheet"),openDay=-1;
+function openRecipe(day){
+  var r=recipe(S.plan.dinners[day],S.persons,S.goal),n=nutrition(S.plan.dinners[day],S.goal); openDay=day;
+  sheet.innerHTML='<div class="panel" role="dialog" aria-modal="true" aria-labelledby="rtitle">'+
+    '<div class="phead"><div class="group"><h3>'+dayLabel(addDays(S.plan.start,day)).day+' '+dayLabel(addDays(S.plan.start,day)).date+' · '+r.min+' min · '+personsLabel(S.persons)+'</h3><h2 id="rtitle">'+esc(r.name)+'</h2></div><button type="button" class="close" id="rclose" data-act="closeRecipe" aria-label="Lukk oppskrift">×</button></div>'+
+    '<div class="group"><h3>Per porsjon, omtrent</h3><div class="tiles"><div><b>'+n.kcal+'</b>kcal</div><div><b>'+n.p+' g</b>protein</div><div><b>'+n.k+' g</b>karbo</div><div><b>'+n.f+' g</b>fett</div></div></div>'+
+    '<div class="group"><h3>Dette trenger du</h3><ul class="ingr">'+r.rows.map(function(x){var home=S.plan&&allocFor(S.plan)[x.id]>0;return '<li><span>'+esc(x.name)+(home?'<span class="home">hjemme</span>':'')+'</span><b>'+x.q+'</b></li>';}).join("")+'</ul>'+
+    '<p class="fine">Fra skapet: '+esc(r.pantry.join(", ").toLowerCase())+'.</p>'+
+    '<p class="fine">Alt dette står på handlelisten eller ligger i Mitt kjøleskap, regnet for '+personsLabel(S.persons)+'.</p></div>'+
+    '<div class="group"><h3>Slik gjør du</h3><ol class="steps">'+r.steps.map(function(x){return '<li><span>'+esc(x)+'</span></li>';}).join("")+'</ol></div>'+
+    '<button type="button" class="btn" data-act="closeRecipe">Lukk</button></div>';
+  sheet.classList.add("open");
+  document.getElementById("rclose").focus();
+}
+function closeRecipe(){
+  if(openDay<0) return;
+  sheet.classList.remove("open"); sheet.innerHTML="";
+  var t=view.querySelector('[data-act="recipe"][data-day="'+openDay+'"]'); openDay=-1; if(t) t.focus();
+}
+// ---- Innstillinger ----
+var settingsOpen=false,settingsSnap=null;
+var SKEYS=["name","persons","dinnersPerWeek","goal","diet","allergens","stores","styles","likes"];
+function settingsHtml(){
+  var dpw=S.dinnersPerWeek||7;
+  var sec=function(title,expl,inner){ return '<div class="group"><h3>'+title+'</h3>'+(expl?'<p class="explain">'+expl+'</p>':'')+inner+'</div>'; };
+  return '<div class="panel" role="dialog" aria-modal="true" aria-labelledby="stitle">'+
+    '<div class="phead"><div class="group"><h3>Profil og meny</h3><h2 id="stitle">Innstillinger</h2></div><button type="button" class="close" id="sclose" data-act="cancelSettings" aria-label="Lukk uten å lagre">×</button></div>'+
+    '<label class="f" for="sname">Navn<input type="text" id="sname" maxlength="40" autocomplete="given-name" value="'+esc(S.name)+'"></label>'+
+    sec("Antall personer","Endrer mengdene i ukemenyen og handlelisten med en gang.",
+      '<div class="stepper" role="group" aria-label="Antall personer"><button type="button" id="pminus" data-act="persons" data-d="-1" aria-label="Færre personer"'+(S.persons<=1?' disabled':'')+'>−</button><output id="pout">'+personsLabel(S.persons)+'</output><button type="button" id="pplus" data-act="persons" data-d="1" aria-label="Flere personer"'+(S.persons>=6?' disabled':'')+'>+</button></div>')+
+    sec("Mål for maten","Endrer mengdene med en gang.",'<div class="chips one">'+GOALS.map(function(g){return chip("goal",g[0],g[1],g[2],S.goal===g[0]);}).join("")+'</div>')+
+    sec("Kosthold","Gjelder fra neste ukesmeny. Ukemenyen du har nå beholdes.",'<div class="chips">'+DIETS.map(function(d){return chip("diet",d[0],d[1],d[2],S.diet===d[0]);}).join("")+'</div>')+
+    sec("Allergier og intoleranser","Middager som ikke passer lenger byttes ut med en gang.",'<div class="chips">'+ALLERGENS.map(function(a){return chip("allergens",a[0],a[1],"",S.allergens.indexOf(a[0])>=0);}).join("")+'</div>')+
+    sec("Middager i uken","Gjelder fra neste ukesmeny. Denne uken bruker du Fjern og Legg til middag.",
+      '<div class="stepper" role="group" aria-label="Middager i uken"><button type="button" id="dminus" data-act="dinners" data-d="-1" aria-label="Færre middager"'+(dpw<=3?' disabled':'')+'>−</button><output id="dout">'+dpw+' middager</output><button type="button" id="dplus" data-act="dinners" data-d="1" aria-label="Flere middager"'+(dpw>=7?' disabled':'')+'>+</button></div>')+
+    sec("Butikker","",'<div class="chips">'+STORES.map(function(x){return chip("stores",x,x,"",S.stores.indexOf(x)>=0);}).join("")+'</div>')+
+    sec("Stil på maten","Gjelder fra neste ukesmeny.",'<div class="chips one">'+STYLES.map(function(x){return chip("styles",x[0],x[1],x[2],S.styles.indexOf(x[0])>=0);}).join("")+'</div>')+
+    sec("Favoritter","Gjelder fra neste ukesmeny.",'<div class="chips">'+LIKES.map(function(l){return chip("likes",l[0],l[1],"",S.likes.indexOf(l[0])>=0);}).join("")+'</div>')+
+    '<div class="sfoot"><button type="button" class="btn ghost" data-act="cancelSettings">Avbryt</button><button type="button" class="btn" data-act="saveSettings">Lagre</button></div></div>';
+}
+function openSettings(){
+  settingsSnap={}; SKEYS.forEach(function(k){ settingsSnap[k]=JSON.parse(JSON.stringify(S[k]===undefined?null:S[k])); });
+  settingsOpen=true; sheet.innerHTML=settingsHtml(); sheet.classList.add("open");
+  var c=document.getElementById("sclose"); if(c) c.focus();
+}
+function closeSettingsSheet(){
+  settingsOpen=false; sheet.classList.remove("open"); sheet.innerHTML="";
+  var b=view.querySelector('[data-act="settings"]'); if(b) b.focus({preventScroll:true});
+}
+function cancelSettings(){
+  if(!settingsOpen) return;
+  SKEYS.forEach(function(k){ if(settingsSnap[k]!==null) S[k]=settingsSnap[k]; });
+  save(); closeSettingsSheet();
+}
+function saveSettings(){
+  var nm=(S.name||"").trim();
+  if(!nm){ toast("Skriv inn navnet ditt"); var ni=document.getElementById("sname"); if(ni) ni.focus(); return; }
+  if(!S.stores.length){ toast("Velg minst én butikk"); return; }
+  S.name=nm;
+  var nu={}; SKEYS.forEach(function(k){ nu[k]=JSON.parse(JSON.stringify(S[k]===undefined?null:S[k])); });
+  var old=settingsSnap;
+  closeSettingsSheet();
+  // Diet only changes from the next menu: this week keeps the diet it was made with.
+  var weekDiet=S.plan.diet||old.diet; S.plan.diet=weekDiet;
+  var prof=profile(); prof.diet=weekDiet;
+  var dietMsg=nu.diet!==old.diet && nu.diet!==weekDiet?". Nytt kosthold gjelder fra neste ukesmeny":"";
+  var conflict=[]; S.plan.dinners.forEach(function(i,k){ if(!ok(DINNERS[i],prof)) conflict.push(k); });
+  var newBf=S.plan.bf.some(function(m){return !ok(BREAKFASTS[m.idx],prof);})?pickMeals(BREAKFASTS,prof,Math.random,S.plan.bf):S.plan.bf;
+  var newLu=S.plan.lu.some(function(m){return !ok(LUNCHES[m.idx],prof);})?pickMeals(LUNCHES,prof,Math.random,S.plan.lu):S.plan.lu;
+  var newSn=pickSnacks(prof);
+  var listChanges=conflict.length||newBf!==S.plan.bf||newLu!==S.plan.lu||JSON.stringify(newSn)!==JSON.stringify(S.plan.snacks)||old.persons!==nu.persons||old.goal!==nu.goal;
+  if(!listChanges){ save(); var y=window.scrollY; render(); window.scrollTo(0,y); toast("Innstillingene er lagret"+dietMsg); return; }
+  // Work out the list change from the old settings, so the notice and the fridge see what really changed.
+  SKEYS.forEach(function(k){ if(old[k]!==null) S[k]=old[k]; });
+  var label="Innstillingene er lagret"+dietMsg+(conflict.length?". "+conflict.length+(conflict.length===1?" middag":" middager")+" passet ikke lenger og er byttet ut":"");
+  changeMenu(conflict.length?conflict[0]:0,function(){
+    SKEYS.forEach(function(k){ if(nu[k]!==null) S[k]=nu[k]; });
+    var inPlan=S.plan.dinners.slice();
+    var cand=(S.plan.reserve||[]).filter(function(i){return ok(DINNERS[i],prof) && inPlan.indexOf(i)<0;});
+    DINNERS.forEach(function(r,i){ if(ok(r,prof) && inPlan.indexOf(i)<0 && cand.indexOf(i)<0) cand.push(i); });
+    conflict.forEach(function(k){
+      if(cand.length) S.plan.dinners[k]=cand.shift();
+      else S.plan.free=(S.plan.free||[]).concat([k]).sort();
+    });
+    S.plan.reserve=cand;
+    S.plan.bf=newBf; S.plan.lu=newLu; S.plan.snacks=newSn;
+  },label);
+}
+var fridgeOpen=false;
+var SHELF=[["snart","Bruk snart","Frys kjøtt og fisk hvis du ikke bruker det innen 1–2 dager."],["stund","Holder en stund",""],["lenge","Holder lenge",""],["annet","Annet",""]];
+function fridgeHtml(){
+  var al=S.plan?allocFor(S.plan):{},groups={},byId={};
+  (S.fridge||[]).forEach(function(e){
+    var k=e.id; if(!byId[k]) byId[k]={id:k,name:e.name,q:0,added:e.added,known:!!ING[e.id],age:"ok"};
+    byId[k].q+=e.q||0; if(e.added<byId[k].added) byId[k].added=e.added;
+    var ag=ageState(e); if(ag==="gammel"||(ag==="sjekk"&&byId[k].age==="ok")) byId[k].age=ag;
+  });
+  Object.keys(byId).forEach(function(k){ var it=byId[k],sh=it.known?shelf(k):"annet"; (groups[sh]=groups[sh]||[]).push(it); });
+  var names=Object.keys(ING).filter(function(id){return ING[id][2];}).map(function(id){return ING[id][0];}).sort(function(a,b){return a.localeCompare(b,"nb");});
+  var body=Object.keys(byId).length?SHELF.map(function(sh){
+    var items=(groups[sh[0]]||[]).sort(function(a,b){return a.name.localeCompare(b.name,"nb");}); if(!items.length) return "";
+    return '<div class="group"><h3>'+sh[1]+'</h3>'+(sh[2]?'<p class="explain">'+sh[2]+'</p>':'')+'<ul class="ingr">'+items.map(function(it){
+      var dl=dayLabel(it.added),use=al[it.id]?'<small class="use">'+qty(Math.min(al[it.id],it.q),ING[it.id][2])+' brukes i ukemenyen</small>':'';
+      var agTxt=it.age==="gammel"&&al[it.id]>0?'<small class="old">Kan være for gammel. Ukemenyen regner med den, så sjekk den før du lager middagen.</small>':
+        it.age==="gammel"?'<small class="old">Kan være for gammel. Trekkes ikke fra handlelisten før du bekrefter at den er god.</small><button type="button" class="mini" data-act="stillgood" data-id="'+esc(it.id)+'">Fortsatt god</button>':(it.age==="sjekk"?'<small class="chk">Sjekk om den fortsatt er god</small>':'');
+      return '<li class="fr"><span>'+esc(it.name)+'<small>Lagt inn '+dl.date+'</small>'+use+agTxt+'</span><span class="frq"><b>'+(it.known?qty(it.q,ING[it.id][2]):'')+'</b><button type="button" class="rm" data-act="rmfridge" data-id="'+esc(it.id)+'" aria-label="Fjern '+esc(it.name)+', brukt opp eller kastet">×</button></span></li>';
+    }).join("")+'</ul></div>';
+  }).join(""):'<p class="lead">Kjøleskapet er tomt.</p>';
+  var alw=(S.always||[]).map(function(id){return '<span class="chipx">'+esc(ING[id]?ING[id][0]:id)+'<button type="button" class="rm" data-act="rmalways" data-id="'+id+'" aria-label="'+esc(ING[id]?ING[id][0]:id)+' har jeg ikke alltid">×</button></span>';}).join("");
+  return '<div class="panel" role="dialog" aria-modal="true" aria-labelledby="ftitle">'+
+    '<div class="phead"><div class="group"><h3>Det du har hjemme</h3><h2 id="ftitle">Mitt kjøleskap</h2></div><button type="button" class="close" id="fclose" data-act="closeFridge" aria-label="Lukk Mitt kjøleskap">×</button></div>'+
+    '<p class="explain">Det du har her trekkes fra handlelisten, og ny uke velger gjerne middager som bruker det. Fjerner eller bytter du en middag etter at du har handlet, havner varene her av seg selv.</p>'+
+    body+
+    '<div class="group"><h3>Legg til selv</h3><datalist id="ingnames">'+names.map(function(n){return '<option value="'+esc(n)+'"></option>';}).join("")+'</datalist>'+
+    '<div class="addrow"><label class="sr" for="fname">Vare</label><input type="text" id="fname" list="ingnames" maxlength="60" placeholder="Vare, f.eks. Kyllingfilet" autocomplete="off">'+
+    '<label class="sr" for="fq">Mengde</label><input type="number" id="fq" inputmode="decimal" min="0" step="any" placeholder="Mengde" style="max-width:96px"><span class="unit" id="funit"></span></div><p class="fine" id="fhint" aria-live="polite"></p>'+
+    '<button type="button" class="btn sm" data-act="addfridge" style="align-self:flex-start">Legg i kjøleskapet</button>'+
+    '<p class="explain">Varer appen kjenner fra oppskriftene trekkes fra handlelisten. Andre varer blir bare stående her.</p></div>'+
+    '<div class="group"><h3>Har alltid</h3><p class="explain">Basisvarer du alltid har, som olje og salt. De vises ikke i handlelisten.</p>'+(alw?'<div class="chips2">'+alw+'</div>':'<p class="fine">Ingen ennå. Trykk «Har alltid» i handlelisten.</p>')+'</div>'+
+    '<button type="button" class="btn" data-act="closeFridge">Lukk</button></div>';
+}
+// Everyday names people type, mapped to the ingredient the recipes use.
+var ALIAS={pasta:"pasta",spagetti:"pasta",spaghetti:"pasta",makaroni:"pasta",penne:"pasta",ris:"ris",jasminris:"ris",basmatiris:"ris",kylling:"kylling",kyllingbryst:"kylling",
+ laks:"laks",torsk:"torsk",fisk:"torsk",reker:"reker",kjottdeig:"kjottdeig",karbonade:"karbonade",biff:"biff",kalkun:"kalkun",melk:"melk",lettmelk:"melk",helmelk:"melk",
+ ost:"gulost",norvegia:"gulost",rommme:"kesam",romme:"kesam",lettromme:"kesam",flote:"flote",fløte:"flote",yoghurt:"yoghurt",egg:"egg",smor:"olje",
+ tomat:"tomat",tomater:"tomat",cherrytomat:"cherry",hermetisketomater:"hermtomat",knusttomat:"hermtomat",tomatbokser:"hermtomat",
+ lok:"lok",gul:"lok",rodlok:"rodlok",hvitlok:"hvitlok",gulrot:"gulrot",gulrotter:"gulrot",potet:"potet",poteter:"potet",sotpotet:"sotpotet",sotpoteter:"sotpotet",
+ salat:"salat",spinat:"spinat",brokkoli:"brokkoli",blomkal:"blomkal",kal:"kal",agurk:"agurk",paprika:"paprika",sopp:"sopp",squash:"squash",purre:"purre",mais:"mais",erter:"erter",
+ avokado:"avokado",sitron:"sitron",lime:"lime",banan:"banan",bananer:"banan",eple:"eple",epler:"eple",baer:"baer",bær:"baer",blabaer:"baer",
+ brod:"brod",brød:"brod",lefse:"tortilla",lefser:"tortilla",tortilla:"tortilla",tortillalefser:"tortilla",pitabrod:"pita",pita:"pita",hamburgerbrod:"burgerbrod",burgerbrod:"burgerbrod",knekkebrod:"knekke",
+ havregryn:"havregryn",havremelk:"havredrikk",havredrikk:"havredrikk",nudler:"risnudler",risnudler:"risnudler",linser:"linser",quinoa:"quinoa",kikerter:"kikerter",
+ bonner:"svartebonner",svartebonner:"svartebonner",kidneybonner:"kidney",kokosmelk:"kokosmelk",tunfisk:"tunfisk",makrell:"makrell",peanottsmor:"peanottsmor",notter:"notter",granola:"granola",
+ skyr:"skyr",cottagecheese:"cottage",cottage:"cottage",feta:"feta",parmesan:"parmesan",mozzarella:"mozzarella",halloumi:"halloumi",tofu:"tofu",hummus:"hummus",edamame:"edamame",
+ fiskekaker:"fiskekaker",wokgronnsaker:"wokmix",salsa:"salsa",tacosaus:"salsa",pesto:"pesto",pizzabunn:"pizzabunn",riskaker:"riskaker",rokelaks:"roktlaks",roktlaks:"roktlaks",kyllingdeig:"kyllingdeig"};
+function normName(x){
+  return (x||"").toLowerCase().replace(/ø/g,"o").replace(/æ/g,"ae").replace(/å/g,"a").replace(/[^a-z]/g,"");
+}
+// Exact name, then everyday name, then a unique ingredient whose name starts or ends with what was typed.
+function unitFor(name){
+  var n=normName(name); if(!n) return null;
+  var id;
+  for(id in ING) if(ING[id][2] && normName(ING[id][0])===n) return id;
+  if(ALIAS[n] && ING[ALIAS[n]] && ING[ALIAS[n]][2]) return ALIAS[n];
+  var sing=n.replace(/(ene|er|r)$/,"");
+  if(sing!==n && ALIAS[sing] && ING[ALIAS[sing]] && ING[ALIAS[sing]][2]) return ALIAS[sing];
+  if(n.length<4) return null;
+  var hits=[]; for(id in ING){ var m=normName(ING[id][0]); if(ING[id][2] && (m.indexOf(n)===0 || m.slice(-n.length)===n)) hits.push(id); }
+  return hits.length===1?hits[0]:null;
+}
+function openFridge(){
+  fridgeOpen=true; sheet.innerHTML=fridgeHtml(); sheet.classList.add("open");
+  var c=document.getElementById("fclose"); if(c) c.focus();
+}
+function refreshFridge(focusId){
+  var p=sheet.querySelector(".panel"),top=p?p.scrollTop:0;
+  sheet.innerHTML=fridgeHtml(); var p2=sheet.querySelector(".panel"); if(p2) p2.scrollTop=top;
+  var f=focusId&&document.getElementById(focusId); if(f) f.focus({preventScroll:true});
+}
+function closeFridge(){
+  if(!fridgeOpen) return;
+  fridgeOpen=false; sheet.classList.remove("open"); sheet.innerHTML="";
+  var y=window.scrollY; render(); window.scrollTo(0,y);
+  var b=view.querySelector('[data-act="fridge"]'); if(b) b.focus({preventScroll:true});
+}
+function addFridgeManual(){
+  var ni=document.getElementById("fname"),qi=document.getElementById("fq"); if(!ni) return;
+  var name=ni.value.trim().replace(/\s+/g," "); if(!name){ ni.focus(); return; }
+  var id=unitFor(name),q=parseFloat(String(qi.value).replace(",","."));
+  if(id){
+    if(!(q>0)){ toast("Skriv inn hvor mye du har ("+ING[id][2]+")"); qi.focus(); return; }
+    addToFridge(id,q,"manual");
+  } else {
+    S.fridge=S.fridge||[]; S.fid=(S.fid||0)+1;
+    S.fridge.push({e:"e"+S.fid,id:"f"+S.fid,name:name,q:0,week:"manual",added:today()});
+  }
+  save(); refreshFridge("fname");
+}
+sheet.addEventListener("click",function(e){ if(e.target===sheet){ closeRecipe(); closeFridge(); cancelSettings(); } });
+sheet.addEventListener("input",function(e){
+  if(e.target.id==="fname"){
+    var id=unitFor(e.target.value),u=document.getElementById("funit"),h=document.getElementById("fhint");
+    if(u) u.textContent=id?ING[id][2]:"";
+    if(h) h.textContent=!e.target.value.trim()?"":(id?(normName(ING[id][0])!==normName(e.target.value)?"Lagres som "+ING[id][0]+".":""):"Ukjent vare. Den lagres, men trekkes ikke fra handlelisten.");
+  }
+});
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-act]"); if(!b) return;
+  var act=b.getAttribute("data-act");
+  if(act==="recipe"){ openRecipe(parseInt(b.getAttribute("data-day"),10)); return; }
+  if(act==="closeRecipe"){ closeRecipe(); return; }
+  if(act==="closeFridge"){ closeFridge(); return; }
+  if(act==="cancelSettings"){ cancelSettings(); return; }
+  if(tourStep>=0 && act!=="tournext" && act!=="tourskip" && act!=="tour") endTour();
+  if(act==="tournext"){ if(tourStep<TOUR.length-1){ tourStep++; showTourStep(); } else endTour(); return; }
+  if(act==="tourskip"){ endTour(); return; }
+  if(act==="closenotice"){ hideNotice(); return; }
+  if(act==="seenew"){ hideNotice(); var f=view.querySelector(".list li.isnew"); if(f) f.scrollIntoView({behavior:"smooth",block:"center"}); return; }
+  if(act==="exitdemo"){
+    try{ history.replaceState(null,"",location.pathname+location.search); }catch(err){ location.hash=""; }
+    render(); window.scrollTo(0,0); return;
+  }
+  if(isDemo() && act!=="copy"){ toast("Dette er bare en forhåndsvisning"); return; }
+  if(act==="feedback"){
+    S.feedback=(S.feedback||[]).filter(function(f){return f.week!==S.plan.start;});
+    S.feedback.push({week:S.plan.start,val:b.getAttribute("data-val")});
+    var y0=window.scrollY; render(); window.scrollTo(0,y0); return;
+  }
+  if(act==="nextweek"){ generate(); save(); showLoading(); return; }
+  if(act==="toggle"){
+    var grp=b.getAttribute("data-group"),val=b.getAttribute("data-val");
+    if(grp==="diet"||grp==="goal"){
+      S[grp]=val;
+      var sib=document.querySelectorAll('[data-group="'+grp+'"]');
+      for(var k=0;k<sib.length;k++) sib[k].setAttribute("aria-pressed",sib[k]===b?"true":"false");
+    } else {
+      var arr=S[grp],ix=arr.indexOf(val);
+      if(ix>=0) arr.splice(ix,1); else arr.push(val);
+      b.setAttribute("aria-pressed",ix>=0?"false":"true");
+      if(grp==="stores"){ var n=document.getElementById("next"); if(n) n.disabled=!S.stores.length; }
+    }
+    save();
+  }
+  else if(act==="dinners"){
+    S.dinnersPerWeek=Math.min(7,Math.max(3,(S.dinnersPerWeek||7)+parseInt(b.getAttribute("data-d"),10)));
+    document.getElementById("dout").textContent=S.dinnersPerWeek+" middager";
+    document.getElementById("dminus").disabled=S.dinnersPerWeek<=3;
+    document.getElementById("dplus").disabled=S.dinnersPerWeek>=7;
+    save();
+  }
+  else if(act==="persons"){
+    S.persons=Math.min(6,Math.max(1,S.persons+parseInt(b.getAttribute("data-d"),10)));
+    var po=document.getElementById("pout"); if(po){ po.textContent=personsLabel(S.persons); document.getElementById("pminus").disabled=S.persons<=1; document.getElementById("pplus").disabled=S.persons>=6; }
+    save();
+  }
+  else if(act==="next"){
+    if(S.step===0){ S.name=S.name.trim(); if(!S.name) return; }
+    if(S.step===3){ generate(); save(); showLoading(); return; }
+    go(S.step+1);
+  }
+  else if(act==="back"){ go(Math.max(0,S.step-1)); }
+  else if(act==="settings"){ openSettings(); }
+  else if(act==="saveSettings"){ saveSettings(); }
+  else if(act==="swap"){
+    var day=parseInt(b.getAttribute("data-day"),10);
+    if(swapLocked(S.plan.dinners[day])){ toast("Du har allerede handlet til denne middagen. Bruk Fjern hvis du ikke skal lage den."); return; }
+    if(!S.plan.reserve.length){ toast("Ingen flere retter passer valgene dine"); return; }
+    changeMenu(day,function(){ var nx=S.plan.reserve.shift(); S.plan.reserve.push(S.plan.dinners[day]); S.plan.dinners[day]=nx; });
+  }
+  else if(act==="rmday"){
+    var rd=parseInt(b.getAttribute("data-day"),10);
+    if(7-(S.plan.free||[]).length<=1){ toast("Du må ha minst én middag i uken"); return; }
+    changeMenu(rd,function(){ S.plan.free=(S.plan.free||[]).concat([rd]).sort(); });
+  }
+  else if(act==="addday"){
+    var dd=parseInt(b.getAttribute("data-day"),10);
+    changeMenu(dd,function(){ S.plan.free=(S.plan.free||[]).filter(function(k){return k!==dd;}); });
+  }
+  else if(act==="editnote"){
+    editingDay=parseInt(b.getAttribute("data-day"),10);
+    var y3=window.scrollY; render(); window.scrollTo(0,y3);
+    var ni=document.getElementById("note-"+editingDay); if(ni){ ni.focus({preventScroll:true}); ni.setSelectionRange(ni.value.length,ni.value.length); }
+  }
+  else if(act==="savenote"){ saveNote(parseInt(b.getAttribute("data-day"),10)); }
+  else if(act==="cancelnote"){ var k4=editingDay; editingDay=-1; var y4=window.scrollY; render(); window.scrollTo(0,y4); var bt4=view.querySelector('[data-act="editnote"][data-day="'+k4+'"]'); if(bt4) bt4.focus({preventScroll:true}); }
+  else if(act==="togglemeal"){
+    var mk2=b.getAttribute("data-meal"),flag=mk2==="bf"?"noBf":"noLu",title=mk2==="bf"?"Frokost":"Lunsj";
+    var turnOff=!S.plan[flag];
+    changeMenu(0,function(){ S.plan[flag]=turnOff; S[flag]=turnOff; },turnOff?title+" er fjernet fra handlelisten":title+" er lagt til i handlelisten");
+    var tb=view.querySelector('[data-act="togglemeal"][data-meal="'+mk2+'"]'); if(tb) tb.focus({preventScroll:true});
+  }
+  else if(act==="fridge"){ if(tourStep>=0) endTour(); openFridge(); }
+  else if(act==="tour"){ startTour(); }
+  else if(act==="addfridge"){ addFridgeManual(); }
+  else if(act==="stillgood"){ var gid=b.getAttribute("data-id"); (S.fridge||[]).forEach(function(x){ if(x.id===gid) x.okDate=today(); }); save(); refreshFridge(); toast("Flott, den teller med igjen"); }
+  else if(act==="rmfridge"){ var rid=b.getAttribute("data-id"); S.fridge=(S.fridge||[]).filter(function(x){return x.id!==rid;}); save(); refreshFridge(); }
+  else if(act==="rmalways"){ var aid=b.getAttribute("data-id"); S.always=(S.always||[]).filter(function(x){return x!==aid;}); save(); refreshFridge(); }
+  else if(act==="always"){
+    e.preventDefault();
+    var wid=b.getAttribute("data-id"); S.always=S.always||[]; if(S.always.indexOf(wid)<0) S.always.push(wid); delete S.checked[wid];
+    var y5=window.scrollY; render(); window.scrollTo(0,y5); toast(ING[wid][0]+" vises ikke lenger. Du finner den i Mitt kjøleskap.");
+  }
+  else if(act==="addextra"){ addExtra(); }
+  else if(act==="rmextra"){
+    e.preventDefault();
+    var xid=b.getAttribute("data-x");
+    S.extra=(S.extra||[]).filter(function(x){return x.id!==xid;}); delete S.checked[xid];
+    var y2=window.scrollY; render(); window.scrollTo(0,y2);
+  }
+  else if(act==="copy"){
+    var txt=listText();
+    try{ navigator.clipboard.writeText(txt).then(function(){toast("Listen er kopiert");},function(){toast("Kunne ikke kopiere listen her");}); }
+    catch(err){ toast("Kunne ikke kopiere listen her"); }
+  }
+});
+document.addEventListener("input",function(e){
+  if(e.target.id==="sname"){ S.name=e.target.value; }
+  if(e.target.id==="name"){ S.name=e.target.value; var n=document.getElementById("next"); if(n) n.disabled=!S.name.trim(); save(); }
+});
+document.addEventListener("change",function(e){
+  var id=e.target.getAttribute && e.target.getAttribute("data-id"); if(!id) return;
+  if(isDemo()){ e.target.checked=!e.target.checked; toast("Dette er bare en forhåndsvisning"); return; }
+  if(e.target.checked){ S.checked[id]=1; if(S.marks && S.marks[id]){ delete S.marks[id]; var li=e.target.closest("li"); li.classList.remove("isnew"); var pl=li.querySelector(".pill"); if(pl) pl.remove(); } }
+  else delete S.checked[id];
+  var boxes=view.querySelectorAll(".list input"),done=0;
+  for(var k=0;k<boxes.length;k++) if(boxes[k].checked) done++;
+  document.getElementById("count").textContent=done+" av "+boxes.length+" varer i kurven";
+  document.getElementById("progbar").style.width=(boxes.length?Math.round(done/boxes.length*100):0)+"%";
+  updateLocks();
+  save();
+});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"){ endTour(); closeRecipe(); closeFridge(); cancelSettings(); if(editingDay>=0 && e.target.id==="note-"+editingDay){ var kk=editingDay; editingDay=-1; render(); var bb=view.querySelector('[data-act="editnote"][data-day="'+kk+'"]'); if(bb) bb.focus(); } }
+  if(e.key==="Enter" && e.target.id && e.target.id.indexOf("note-")===0){ e.preventDefault(); saveNote(parseInt(e.target.id.slice(5),10)); }
+  if(e.key==="Enter" && e.target.id==="sname"){ e.preventDefault(); saveSettings(); }
+  if(e.key==="Enter" && e.target.id==="name" && S.name.trim()){ S.name=S.name.trim(); go(1); }
+  if(e.key==="Enter" && (e.target.id==="fname"||e.target.id==="fq")){ e.preventDefault(); if(isDemo()) toast("Dette er bare en forhåndsvisning"); else addFridgeManual(); }
+  if(e.key==="Enter" && e.target.id==="extra"){ e.preventDefault(); if(isDemo()) toast("Dette er bare en forhåndsvisning"); else addExtra(); }
+});
+
+window.addEventListener("hashchange",function(){ if(S.step===4) render(); });
+function pruneOld(){
+  if(!S.fridge || !S.fridge.length) return 0;
+  var al=S.plan?allocFor(S.plan):{},n0=S.fridge.length;
+  S.fridge=S.fridge.filter(function(e){
+    if(!ING[e.id] || al[e.id]>0) return true;
+    var lim=AGE[shelf(e.id)]||AGE.lenge;
+    return daysBetween(e.okDate||e.added,today())<lim[1]+7;
+  });
+  return n0-S.fridge.length;
+}
+if("serviceWorker" in navigator && location.protocol!=="file:"){
+  window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+}
+function start(data){
+  load(data);
+  var gone=S.step===4?pruneOld():0;
+  render();
+  if(gone) setTimeout(function(){ toast(gone+(gone===1?" gammel vare er":" gamle varer er")+" fjernet fra Mitt kjøleskap"); },400);
+}
+var hot=window.claude && window.claude.hot;
+if(hot && hot.snapshot) hot.snapshot(function(){ return JSON.parse(JSON.stringify(S)); });
+if(hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
+</script>
+</body>
+</html>
